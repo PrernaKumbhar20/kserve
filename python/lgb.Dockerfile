@@ -5,8 +5,16 @@ ARG VENV_PATH=/prod_venv
 FROM ${BASE_IMAGE} AS builder
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends python3-dev curl build-essential && apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+ARG GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=0
+# Install system dependencies
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+    apt-get update && apt-get install -y --no-install-recommends python3-dev curl build-essential libssl-dev pkg-config gcc g++ gfortran libopenblas-dev && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*; \
+    else \
+    apt-get update && apt-get install -y --no-install-recommends python3-dev curl build-essential && apt-get clean && \
+    rm -rf /var/lib/apt/lists/*; \
+    fi
+
 
 # Install uv and ensure it's in PATH
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
@@ -17,6 +25,7 @@ ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
 RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=${GRPC_PYTHON_BUILD_SYSTEM_OPENSSL}
 
 # Copy storage metadata for editable dependency resolution
 COPY storage/pyproject.toml storage/uv.lock storage/
