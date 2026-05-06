@@ -2578,7 +2578,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/30/74c48b3b6494c4b820b7fa1781d441e94d87a08daa5b35d222f06ba41a6f/numpy-2.2.4-pp310-pypy310_pp73-macosx_14_0_x86_64.whl", hash = "sha256:ab2939cd5bec30a7430cbdb2287b63151b77cf9624de0532d629c9a1c59b1d5c", size = 6827143, upload-time = "2025-03-16T18:21:26.748Z" },
     { url = "https://files.pythonhosted.org/packages/54/f5/ab0d2f48b490535c7a80e05da4a98902b632369efc04f0e47bb31ca97d8f/numpy-2.2.4-pp310-pypy310_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d0f35b19894a9e08639fd60a1ec1978cb7f5f7f1eace62f38dd36be8aecdef4d", size = 16233350, upload-time = "2025-03-16T18:21:53.902Z" },
     { url = "https://files.pythonhosted.org/packages/3b/3a/2f6d8c1f8e45d496bca6baaec93208035faeb40d5735c25afac092ec9a12/numpy-2.2.4-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:b4adfbbc64014976d2f91084915ca4e626fbf2057fb81af209c1a6d776d23e3d", size = 12857565, upload-time = "2025-03-16T18:22:17.631Z" },
-    {url = "https://wheels.developerfirst.ibm.com/ppc64le/linux/+f/4c0/6cf7ca56682c8/numpy-2.4.2+ppc64le1-cp311-cp311-manylinux_2_34_ppc64le.whl", hash = "sha256:4c06cf7ca56682c882dc5379127ec45c3a9d664ec7ed3809d6f60b9f298e558f", size = 156338, upload-time = "2024-08-06T20:32:41.93Z" },
+    { url = "https://wheels.developerfirst.ibm.com/ppc64le/linux/+f/4c0/6cf7ca56682c8/numpy-2.4.2+ppc64le1-cp311-cp311-manylinux_2_34_ppc64le.whl", hash = "sha256:4c06cf7ca56682c882dc5379127ec45c3a9d664ec7ed3809d6f60b9f298e558f", size = 156338, upload-time = "2024-08-06T20:32:41.93Z" },
 ]
 
 [[package]]
@@ -3382,7 +3382,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/6e/f5/2aa3a4acdc1e5940b59d421742356f133185667dd190b166dbcfcf5d7b43/psutil-5.9.8-cp37-abi3-win32.whl", hash = "sha256:bc56c2a1b0d15aa3eaa5a60c9f3f8e3e565303b465dbf57a1b730e7a2b9844e0", size = 251252, upload-time = "2024-01-19T20:47:52.88Z" },
     { url = "https://files.pythonhosted.org/packages/93/52/3e39d26feae7df0aa0fd510b14012c3678b36ed068f7d78b8d8784d61f0e/psutil-5.9.8-cp37-abi3-win_amd64.whl", hash = "sha256:8db4c1b57507eef143a15a6884ca10f7c73876cdf5d51e713151c1236a0e68cf", size = 255090, upload-time = "2024-01-19T20:47:56.019Z" },
     { url = "https://files.pythonhosted.org/packages/05/33/2d74d588408caedd065c2497bdb5ef83ce6082db01289a1e1147f6639802/psutil-5.9.8-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:d16bbddf0693323b8c6123dd804100241da461e41d6e332fb0ba6058f630f8c8", size = 249898, upload-time = "2024-01-19T20:47:59.238Z" },
-    {url = "https://wheels.developerfirst.ibm.com/ppc64le/linux/+f/a5d/d506bf177cc66/psutil-5.9.8-cp311-abi3-linux_ppc64le.whl", hash = "sha256"a5dd506bf177cc66a930c0eda9bbd3534aaa1a5544c50c5e1de12455846d77de", size = 156338, upload-time = "2024-08-06T20:32:41.93Z" },
+    { url = "https://wheels.developerfirst.ibm.com/ppc64le/linux/+f/a5d/d506bf177cc66/psutil-5.9.8-cp311-abi3-linux_ppc64le.whl", hash = "sha256"a5dd506bf177cc66a930c0eda9bbd3534aaa1a5544c50c5e1de12455846d77de", size = 156338, upload-time = "2024-08-06T20:32:41.93Z" },
 ]
 
 [[package]]
