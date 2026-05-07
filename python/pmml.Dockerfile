@@ -4,10 +4,29 @@ ARG BASE_IMAGE=eclipse-temurin:${JAVA_VERSION}-jdk-noble
 ARG VENV_PATH=/prod_venv
 
 FROM ${BASE_IMAGE} AS builder
-
+ARG GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=0
 ARG PYTHON_VERSION
+ARG JAVA_VERSION
 # Install python
-RUN apt-get update && \
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    "python${PYTHON_VERSION}" \
+    "python${PYTHON_VERSION}-dev" \
+    "python${PYTHON_VERSION}-venv" \
+    python3-pip \
+    curl \
+    wget \
+    libssl-dev \
+    pkg-config \
+    libopenblas-dev \
+    apt-transport-https \
+    gpg \
+    gcc build-essential && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*; \
+    else \
+    apt-get update && \
     apt-get install -y --no-install-recommends \
     "python${PYTHON_VERSION}" \
     "python${PYTHON_VERSION}-dev" \
@@ -16,7 +35,20 @@ RUN apt-get update && \
     curl \
     gcc build-essential && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*; \
+    fi
+
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public \
+| gpg --dearmor \
+| tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null && \
+echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" \
+| tee /etc/apt/sources.list.d/adoptium.list && \
+apt update && \
+apt install -y temurin-${JAVA_VERSION}-jdk && \
+export JAVA_HOME=/usr/lib/jvm/temurin-${JAVA_VERSION}-jdk-ppc64el \
+export PATH="$JAVA_HOME/bin:$PATH"; \
+fi
 
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
@@ -27,7 +59,7 @@ ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
 RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
+ENV GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=${GRPC_PYTHON_BUILD_SYSTEM_OPENSSL}
 # Copy storage metadata for editable dependency resolution
 COPY storage/pyproject.toml storage/uv.lock storage/
 
