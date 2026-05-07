@@ -821,7 +821,7 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/0c/3a5fa47d2437a44ced74141795ac0251bbddeae74bf81df3447edd767d27/grpcio-1.74.0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:cce634b10aeab37010449124814b05a62fb5f18928ca878f1bf4750d1f0c815b", size = 6489616, upload-time = "2025-07-24T18:53:36.217Z" },
     { url = "https://files.pythonhosted.org/packages/ae/95/ab64703b436d99dc5217228babc76047d60e9ad14df129e307b5fec81fd0/grpcio-1.74.0-cp312-cp312-win32.whl", hash = "sha256:885912559974df35d92219e2dc98f51a16a48395f37b92865ad45186f294096c", size = 3807083, upload-time = "2025-07-24T18:53:37.911Z" },
     { url = "https://files.pythonhosted.org/packages/84/59/900aa2445891fc47a33f7d2f76e00ca5d6ae6584b20d19af9c06fa09bf9a/grpcio-1.74.0-cp312-cp312-win_amd64.whl", hash = "sha256:42f8fee287427b94be63d916c90399ed310ed10aadbf9e2e5538b3e497d269bc", size = 4490123, upload-time = "2025-07-24T18:53:39.528Z" },
-    { url = "https://wheels-staging.developerfirst.ibm.com/ppc64le/linux/+f/43b/909ba45f8c7f1/grpcio-1.78.1+ppc64le1-cp311-cp311-manylinux_2_34_ppc64le.whl", hash = "sha256:43b909ba45f8c7f1c8cd58a5debff8934bd3ebc7b7615065532787d8748669d4", size = 4797537, upload-time = "2026-02-20T01:14:25.444Z" },
+    { url = "https://wheels-staging.developerfirst.ibm.com/ppc64le/linux/+f/43b/909ba45f8c7f1/grpcio-1.78.0+ppc64le1-cp311-cp311-manylinux_2_34_ppc64le.whl", hash = "sha256:43b909ba45f8c7f1c8cd58a5debff8934bd3ebc7b7615065532787d8748669d4", size = 4797537, upload-time = "2026-02-20T01:14:25.444Z" },
 ]
 
 [[package]]
