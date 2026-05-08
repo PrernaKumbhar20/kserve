@@ -1,4 +1,4 @@
-name: LightGBMServer Docker Publisher
+name: LightGBMServer ppc64le Docker Publisher
 
 on:
   push:

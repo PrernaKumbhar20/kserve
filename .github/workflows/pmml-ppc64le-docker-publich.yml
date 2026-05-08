@@ -1,4 +1,4 @@
-name: PMMLServer Docker Publisher
+name: PMMLServer ppc64le Docker Publisher
 
 on:
   push:
