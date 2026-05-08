@@ -53,7 +53,6 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 
 # Install dependencies for kserve using uv
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
-RUN cat kserve/uv.lock
 RUN cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve
