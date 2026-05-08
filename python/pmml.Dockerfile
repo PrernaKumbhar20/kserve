@@ -38,18 +38,6 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
     rm -rf /var/lib/apt/lists/*; \
     fi
 
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
-wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public \
-| gpg --dearmor \
-| tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null && \
-echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" \
-| tee /etc/apt/sources.list.d/adoptium.list && \
-apt update && \
-apt install -y temurin-${JAVA_VERSION}-jdk && \
-export JAVA_HOME=/usr/lib/jvm/temurin-${JAVA_VERSION}-jdk-ppc64el \
-export PATH="$JAVA_HOME/bin:$PATH"; \
-fi
-
 # Install uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     ln -s /root/.local/bin/uv /usr/local/bin/uv
