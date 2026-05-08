@@ -1,6 +1,6 @@
 ARG PYTHON_VERSION=3.11
 ARG JAVA_VERSION=21
-ARG BASE_IMAGE=eclipse-temurin:${JAVA_VERSION}-jdk-bookworm
+ARG BASE_IMAGE=eclipse-temurin:${JAVA_VERSION}-jdk-noble
 ARG VENV_PATH=/prod_venv
 
 FROM ${BASE_IMAGE} AS builder
