@@ -160,3 +160,7 @@ lightgbm = [
     { index = "pypi", marker = "platform_machine != 'ppc64le'" },
     { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
 ]
+vllm = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
