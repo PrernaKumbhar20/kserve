@@ -39,6 +39,8 @@ dependencies = [
     # CVE-2026-30922 pyasn1 Vulnerable to Denial of Service via Unbounded Recursion
     # Pinning because it is a transitive dependency.
     "pyasn1>=0.6.3"
+    "httptools>=0.6.0",     
+    "uvloop>=0.17.0",  
 ]
 name = "kserve"
 version = "0.18.0"
