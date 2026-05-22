@@ -75,7 +75,7 @@ ray = [
     "ray[serve]>=2.43.0",
 ]
 llm = [
-    "vllm==0.20.0; platform_machine != 'ppc64le' and sys_platform == 'linux'",
+    "vllm==0.20.0",
 ]
 
 [dependency-groups]
