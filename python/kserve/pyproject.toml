@@ -101,6 +101,7 @@ dev = [
 ]
 
 [tool.uv]
+index-strategy = "unsafe-best-match"
 # TODO remove later
 [[tool.uv.index]]
 name = "pypi"
