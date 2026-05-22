@@ -25,10 +25,10 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 
 # Install dependencies for kserve using uv
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
-RUN cd kserve && uv sync --active --no-cache
+RUN cd kserve && uv lock --upgrade && uv sync --active --no-cache
 
 COPY kserve kserve
-RUN cd kserve && uv sync --active --no-cache
+RUN cd kserve && uv lock --upgrade && uv sync --active --no-cache
 
 # Install kserve-storage
 COPY storage storage
@@ -36,10 +36,10 @@ RUN cd storage && uv pip install . --no-cache
 
 # Install dependencies for lgbserver using uv
 COPY lgbserver/pyproject.toml lgbserver/uv.lock lgbserver/
-RUN cd lgbserver && uv sync --active --no-cache
+RUN cd lgbserver && uv lock --upgrade && uv sync --active --no-cache
 
 COPY lgbserver lgbserver
-RUN cd lgbserver && uv sync --active --no-cache
+RUN cd lgbserver && uv lock --upgrade && uv sync --active --no-cache
 
 # Generate third-party licenses
 COPY pyproject.toml pyproject.toml
