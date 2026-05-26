@@ -9,7 +9,7 @@ FROM ${BASE_IMAGE} AS builder
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends curl python3-dev build-essential && \
     if [ "$(uname -m)" = "ppc64le" ]; then apt-get install pkg-config libssl-dev gcc gfortran cmake pkg-config libssl-dev libopenblas-dev libjpeg-dev libhdf5-dev wget -y; fi && \
-    apt-get clean 
+    apt-get clean
 
 # Install uv and ensure it's in PATH
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
