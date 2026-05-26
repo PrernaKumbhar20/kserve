@@ -9,6 +9,8 @@ dependencies = [
     "kserve-storage @ file:///${PROJECT_ROOT}/../storage",
     "lightgbm[scikit-learn]~=4.6.0",
     "pandas<3.0.0,>=2.2.0",
+    "scikit-learn==1.6.1",
+    "scipy==1.15.2",
 ]
 name = "lgbserver"
 version = "0.18.0"
