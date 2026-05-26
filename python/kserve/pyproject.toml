@@ -38,7 +38,8 @@ dependencies = [
     "pyjwt>=2.12.0",
     # CVE-2026-30922 pyasn1 Vulnerable to Denial of Service via Unbounded Recursion
     # Pinning because it is a transitive dependency.
-    "pyasn1>=0.6.3"
+    "pyasn1>=0.6.3",
+    "uvloop>=0.17.0"
 ]
 name = "kserve"
 version = "0.18.0"
@@ -101,9 +102,16 @@ dev = [
 ]
 
 [tool.uv]
+index-strategy = "unsafe-best-match"
 # TODO remove later
-index-url = "https://test.pypi.org/simple/"
-extra-index-url = ["https://pypi.org/simple"]
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "power-wheels"
+url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
 index-strategy = "unsafe-best-match"
 
 [build-system]
@@ -113,3 +121,45 @@ build-backend = "setuptools.build_meta"
 # UV workspace source for local dependency resolution
 [tool.uv.sources]
 kserve-storage = { path = "../storage", editable = true }
+
+
+grpcio = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+grpcio_tools = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+numpy = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+pandas = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+psutil = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+pyyaml = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+httptools = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+uvloop = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+scikit-learn = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
+lightgbm = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
