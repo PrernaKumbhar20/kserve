@@ -13,13 +13,11 @@ on:
   # Run tests for any PRs.
   pull_request:
     paths:
-      - "python/*lgbserver*"
-      - "python/storage/**"
-      - "python/lgb.Dockerfile"
+      - "python/**"
       - "!.github/**"
       - "!docs/**"
       - "!**.md"
-      - ".github/workflows/lightgbm-ppc64le-docker-publish.yml"
+      - ".github/workflows/lightgbm-docker-publish.yml"
       - ".github/actions/free-up-disk-space/**"
   # To save some compute time, rely on PR check and don't run for merge queues
   # merge_group:
