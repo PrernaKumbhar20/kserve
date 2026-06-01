@@ -80,3 +80,7 @@ scikit-learn = [
     { index = "pypi", marker = "platform_machine != 'ppc64le'" },
     { index = "ppc64le-wheels", marker = "platform_machine == 'ppc64le'" },
 ]
+google-crc32c = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "ppc64le-wheels", marker = "platform_machine == 'ppc64le'" },
+]
