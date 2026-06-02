@@ -1317,8 +1317,10 @@ dependencies = [
     { name = "scikit-learn", version = "1.7.2+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11' and platform_machine == 'ppc64le'" },
     { name = "scikit-learn", version = "1.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and platform_machine != 'ppc64le'" },
     { name = "scikit-learn", version = "1.8.0+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
-    { name = "scipy", version = "1.15.3+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
+    { name = "scipy", version = "1.15.3+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11' and platform_machine == 'ppc64le'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and platform_machine != 'ppc64le'" },
+    { name = "scipy", version = "1.17.1+ppc64le2", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
 ]
 
 [package.dev-dependencies]
@@ -1341,7 +1343,8 @@ requires-dist = [
     { name = "pandas", marker = "platform_machine == 'ppc64le'", specifier = ">=2.2.0,<3.0.0", index = "https://wheels.developerfirst.ibm.com/ppc64le/linux" },
     { name = "scikit-learn", marker = "platform_machine != 'ppc64le'", specifier = ">=1.6.1", index = "https://pypi.org/simple" },
     { name = "scikit-learn", marker = "platform_machine == 'ppc64le'", specifier = ">=1.6.1", index = "https://wheels.developerfirst.ibm.com/ppc64le/linux" },
-    { name = "scipy", specifier = ">=1.15.2" },
+    { name = "scipy", marker = "platform_machine != 'ppc64le'", specifier = ">=1.15.2", index = "https://pypi.org/simple" },
+    { name = "scipy", marker = "platform_machine == 'ppc64le'", specifier = ">=1.15.2", index = "https://wheels.developerfirst.ibm.com/ppc64le/linux" },
 ]
 
 [package.metadata.requires-dev]
@@ -1362,8 +1365,10 @@ dependencies = [
     { name = "numpy", version = "2.2.6+ppc64le2", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11' and platform_machine == 'ppc64le'" },
     { name = "numpy", version = "2.4.4+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and platform_machine != 'ppc64le'" },
-    { name = "scipy", version = "1.15.3+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
+    { name = "scipy", version = "1.15.3+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11' and platform_machine == 'ppc64le'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and platform_machine != 'ppc64le'" },
+    { name = "scipy", version = "1.17.1+ppc64le2", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
 ]
 wheels = [
     { url = "https://wheels.developerfirst.ibm.com/ppc64le/linux/+f/050/3cade40103cee/lightgbm-4.6.0+ppc64le1-py3-none-linux_ppc64le.whl", hash = "sha256:0503cade40103cee65dae0fbb5204e5799d8d8a1d4c8bf64684b1ba83ae8b916" },
@@ -2280,7 +2285,7 @@ resolution-markers = [
 dependencies = [
     { name = "joblib", marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
-    { name = "scipy", version = "1.15.3+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
     { name = "threadpoolctl", marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/98/c2/a7855e41c9d285dfe86dc50b250978105dce513d6e459ea66a6aeb0e1e0c/scikit_learn-1.7.2.tar.gz", hash = "sha256:20e9e49ecd130598f1ca38a1d85090e1a600147b9c02fa6f15d69cb53d968fda", size = 7193136, upload-time = "2025-09-09T08:21:29.075Z" }
@@ -2365,7 +2370,7 @@ resolution-markers = [
 dependencies = [
     { name = "joblib", marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
     { name = "numpy", version = "2.4.4+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
+    { name = "scipy", version = "1.17.1+ppc64le2", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
     { name = "threadpoolctl", marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
 ]
 wheels = [
@@ -2375,15 +2380,55 @@ wheels = [
 
 [[package]]
 name = "scipy"
-version = "1.15.3+ppc64le1"
-source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }
+version = "1.15.3"
+source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version < '3.11' and platform_machine != 'ppc64le'",
     "python_version < '0'",
-    "python_full_version < '3.11' and platform_machine == 'ppc64le'",
 ]
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' and platform_machine != 'ppc64le'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0f/37/6964b830433e654ec7485e45a00fc9a27cf868d622838f6b6d9c5ec0d532/scipy-1.15.3.tar.gz", hash = "sha256:eae3cf522bc7df64b42cad3925c876e1b0b6c35c1337c93e12c0f366f55b0eaf", size = 59419214, upload-time = "2025-05-08T16:13:05.955Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/78/2f/4966032c5f8cc7e6a60f1b2e0ad686293b9474b65246b0c642e3ef3badd0/scipy-1.15.3-cp310-cp310-macosx_10_13_x86_64.whl", hash = "sha256:a345928c86d535060c9c2b25e71e87c39ab2f22fc96e9636bd74d1dbf9de448c", size = 38702770, upload-time = "2025-05-08T16:04:20.849Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/6e/0c3bf90fae0e910c274db43304ebe25a6b391327f3f10b5dcc638c090795/scipy-1.15.3-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:ad3432cb0f9ed87477a8d97f03b763fd1d57709f1bbde3c9369b1dff5503b253", size = 30094511, upload-time = "2025-05-08T16:04:27.103Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/b1/4deb37252311c1acff7f101f6453f0440794f51b6eacb1aad4459a134081/scipy-1.15.3-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:aef683a9ae6eb00728a542b796f52a5477b78252edede72b8327a886ab63293f", size = 22368151, upload-time = "2025-05-08T16:04:31.731Z" },
+    { url = "https://files.pythonhosted.org/packages/38/7d/f457626e3cd3c29b3a49ca115a304cebb8cc6f31b04678f03b216899d3c6/scipy-1.15.3-cp310-cp310-macosx_14_0_x86_64.whl", hash = "sha256:1c832e1bd78dea67d5c16f786681b28dd695a8cb1fb90af2e27580d3d0967e92", size = 25121732, upload-time = "2025-05-08T16:04:36.596Z" },
+    { url = "https://files.pythonhosted.org/packages/db/0a/92b1de4a7adc7a15dcf5bddc6e191f6f29ee663b30511ce20467ef9b82e4/scipy-1.15.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:263961f658ce2165bbd7b99fa5135195c3a12d9bef045345016b8b50c315cb82", size = 35547617, upload-time = "2025-05-08T16:04:43.546Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/6d/41991e503e51fc1134502694c5fa7a1671501a17ffa12716a4a9151af3df/scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9e2abc762b0811e09a0d3258abee2d98e0c703eee49464ce0069590846f31d40", size = 37662964, upload-time = "2025-05-08T16:04:49.431Z" },
+    { url = "https://files.pythonhosted.org/packages/25/e1/3df8f83cb15f3500478c889be8fb18700813b95e9e087328230b98d547ff/scipy-1.15.3-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:ed7284b21a7a0c8f1b6e5977ac05396c0d008b89e05498c8b7e8f4a1423bba0e", size = 37238749, upload-time = "2025-05-08T16:04:55.215Z" },
+    { url = "https://files.pythonhosted.org/packages/93/3e/b3257cf446f2a3533ed7809757039016b74cd6f38271de91682aa844cfc5/scipy-1.15.3-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:5380741e53df2c566f4d234b100a484b420af85deb39ea35a1cc1be84ff53a5c", size = 40022383, upload-time = "2025-05-08T16:05:01.914Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/84/55bc4881973d3f79b479a5a2e2df61c8c9a04fcb986a213ac9c02cfb659b/scipy-1.15.3-cp310-cp310-win_amd64.whl", hash = "sha256:9d61e97b186a57350f6d6fd72640f9e99d5a4a2b8fbf4b9ee9a841eab327dc13", size = 41259201, upload-time = "2025-05-08T16:05:08.166Z" },
+    { url = "https://files.pythonhosted.org/packages/96/ab/5cc9f80f28f6a7dff646c5756e559823614a42b1939d86dd0ed550470210/scipy-1.15.3-cp311-cp311-macosx_10_13_x86_64.whl", hash = "sha256:993439ce220d25e3696d1b23b233dd010169b62f6456488567e830654ee37a6b", size = 38714255, upload-time = "2025-05-08T16:05:14.596Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/4a/66ba30abe5ad1a3ad15bfb0b59d22174012e8056ff448cb1644deccbfed2/scipy-1.15.3-cp311-cp311-macosx_12_0_arm64.whl", hash = "sha256:34716e281f181a02341ddeaad584205bd2fd3c242063bd3423d61ac259ca7eba", size = 30111035, upload-time = "2025-05-08T16:05:20.152Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/fa/a7e5b95afd80d24313307f03624acc65801846fa75599034f8ceb9e2cbf6/scipy-1.15.3-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:3b0334816afb8b91dab859281b1b9786934392aa3d527cd847e41bb6f45bee65", size = 22384499, upload-time = "2025-05-08T16:05:24.494Z" },
+    { url = "https://files.pythonhosted.org/packages/17/99/f3aaddccf3588bb4aea70ba35328c204cadd89517a1612ecfda5b2dd9d7a/scipy-1.15.3-cp311-cp311-macosx_14_0_x86_64.whl", hash = "sha256:6db907c7368e3092e24919b5e31c76998b0ce1684d51a90943cb0ed1b4ffd6c1", size = 25152602, upload-time = "2025-05-08T16:05:29.313Z" },
+    { url = "https://files.pythonhosted.org/packages/56/c5/1032cdb565f146109212153339f9cb8b993701e9fe56b1c97699eee12586/scipy-1.15.3-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:721d6b4ef5dc82ca8968c25b111e307083d7ca9091bc38163fb89243e85e3889", size = 35503415, upload-time = "2025-05-08T16:05:34.699Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/37/89f19c8c05505d0601ed5650156e50eb881ae3918786c8fd7262b4ee66d3/scipy-1.15.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39cb9c62e471b1bb3750066ecc3a3f3052b37751c7c3dfd0fd7e48900ed52982", size = 37652622, upload-time = "2025-05-08T16:05:40.762Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/31/be59513aa9695519b18e1851bb9e487de66f2d31f835201f1b42f5d4d475/scipy-1.15.3-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:795c46999bae845966368a3c013e0e00947932d68e235702b5c3f6ea799aa8c9", size = 37244796, upload-time = "2025-05-08T16:05:48.119Z" },
+    { url = "https://files.pythonhosted.org/packages/10/c0/4f5f3eeccc235632aab79b27a74a9130c6c35df358129f7ac8b29f562ac7/scipy-1.15.3-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:18aaacb735ab38b38db42cb01f6b92a2d0d4b6aabefeb07f02849e47f8fb3594", size = 40047684, upload-time = "2025-05-08T16:05:54.22Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/a7/0ddaf514ce8a8714f6ed243a2b391b41dbb65251affe21ee3077ec45ea9a/scipy-1.15.3-cp311-cp311-win_amd64.whl", hash = "sha256:ae48a786a28412d744c62fd7816a4118ef97e5be0bee968ce8f0a2fba7acf3bb", size = 41246504, upload-time = "2025-05-08T16:06:00.437Z" },
+    { url = "https://files.pythonhosted.org/packages/37/4b/683aa044c4162e10ed7a7ea30527f2cbd92e6999c10a8ed8edb253836e9c/scipy-1.15.3-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:6ac6310fdbfb7aa6612408bd2f07295bcbd3fda00d2d702178434751fe48e019", size = 38766735, upload-time = "2025-05-08T16:06:06.471Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/7e/f30be3d03de07f25dc0ec926d1681fed5c732d759ac8f51079708c79e680/scipy-1.15.3-cp312-cp312-macosx_12_0_arm64.whl", hash = "sha256:185cd3d6d05ca4b44a8f1595af87f9c372bb6acf9c808e99aa3e9aa03bd98cf6", size = 30173284, upload-time = "2025-05-08T16:06:11.686Z" },
+    { url = "https://files.pythonhosted.org/packages/07/9c/0ddb0d0abdabe0d181c1793db51f02cd59e4901da6f9f7848e1f96759f0d/scipy-1.15.3-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:05dc6abcd105e1a29f95eada46d4a3f251743cfd7d3ae8ddb4088047f24ea477", size = 22446958, upload-time = "2025-05-08T16:06:15.97Z" },
+    { url = "https://files.pythonhosted.org/packages/af/43/0bce905a965f36c58ff80d8bea33f1f9351b05fad4beaad4eae34699b7a1/scipy-1.15.3-cp312-cp312-macosx_14_0_x86_64.whl", hash = "sha256:06efcba926324df1696931a57a176c80848ccd67ce6ad020c810736bfd58eb1c", size = 25242454, upload-time = "2025-05-08T16:06:20.394Z" },
+    { url = "https://files.pythonhosted.org/packages/56/30/a6f08f84ee5b7b28b4c597aca4cbe545535c39fe911845a96414700b64ba/scipy-1.15.3-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c05045d8b9bfd807ee1b9f38761993297b10b245f012b11b13b91ba8945f7e45", size = 35210199, upload-time = "2025-05-08T16:06:26.159Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/1f/03f52c282437a168ee2c7c14a1a0d0781a9a4a8962d84ac05c06b4c5b555/scipy-1.15.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:271e3713e645149ea5ea3e97b57fdab61ce61333f97cfae392c28ba786f9bb49", size = 37309455, upload-time = "2025-05-08T16:06:32.778Z" },
+    { url = "https://files.pythonhosted.org/packages/89/b1/fbb53137f42c4bf630b1ffdfc2151a62d1d1b903b249f030d2b1c0280af8/scipy-1.15.3-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:6cfd56fc1a8e53f6e89ba3a7a7251f7396412d655bca2aa5611c8ec9a6784a1e", size = 36885140, upload-time = "2025-05-08T16:06:39.249Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/2e/025e39e339f5090df1ff266d021892694dbb7e63568edcfe43f892fa381d/scipy-1.15.3-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:0ff17c0bb1cb32952c09217d8d1eed9b53d1463e5f1dd6052c7857f83127d539", size = 39710549, upload-time = "2025-05-08T16:06:45.729Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/eb/3bf6ea8ab7f1503dca3a10df2e4b9c3f6b3316df07f6c0ded94b281c7101/scipy-1.15.3-cp312-cp312-win_amd64.whl", hash = "sha256:52092bc0472cfd17df49ff17e70624345efece4e1a12b23783a1ac59a1b728ed", size = 40966184, upload-time = "2025-05-08T16:06:52.623Z" },
+]
+
+[[package]]
+name = "scipy"
+version = "1.15.3+ppc64le1"
+source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }
+resolution-markers = [
+    "python_full_version < '3.11' and platform_machine == 'ppc64le'",
+    "python_version < '0'",
+]
+dependencies = [
     { name = "numpy", version = "2.2.6+ppc64le2", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version < '3.11' and platform_machine == 'ppc64le'" },
 ]
 wheels = [
@@ -2400,11 +2445,8 @@ resolution-markers = [
     "python_full_version >= '3.12' and platform_machine != 'ppc64le'",
     "python_version < '0'",
     "python_full_version == '3.11.*' and platform_machine != 'ppc64le'",
-    "python_full_version >= '3.12' and platform_machine == 'ppc64le'",
-    "python_full_version == '3.11.*' and platform_machine == 'ppc64le'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.4+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' and platform_machine != 'ppc64le'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/97/5a3609c4f8d58b039179648e62dd220f89864f56f7357f5d4f45c29eb2cc/scipy-1.17.1.tar.gz", hash = "sha256:95d8e012d8cb8816c226aef832200b1d45109ed4464303e997c5b13122b297c0", size = 30573822, upload-time = "2026-02-23T00:26:24.851Z" }
@@ -2429,6 +2471,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/65/94/7698add8f276dbab7a9de9fb6b0e02fc13ee61d51c7c3f85ac28b65e1239/scipy-1.17.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:f590cd684941912d10becc07325a3eeb77886fe981415660d9265c4c418d0bea", size = 37625856, upload-time = "2026-02-23T00:19:00.307Z" },
     { url = "https://files.pythonhosted.org/packages/a2/84/dc08d77fbf3d87d3ee27f6a0c6dcce1de5829a64f2eae85a0ecc1f0daa73/scipy-1.17.1-cp312-cp312-win_amd64.whl", hash = "sha256:41b71f4a3a4cab9d366cd9065b288efc4d4f3c0b37a91a8e0947fb5bd7f31d87", size = 36549682, upload-time = "2026-02-23T00:19:07.67Z" },
     { url = "https://files.pythonhosted.org/packages/bc/98/fe9ae9ffb3b54b62559f52dedaebe204b408db8109a8c66fdd04869e6424/scipy-1.17.1-cp312-cp312-win_arm64.whl", hash = "sha256:f4115102802df98b2b0db3cce5cb9b92572633a1197c77b7553e5203f284a5b3", size = 24547340, upload-time = "2026-02-23T00:19:12.024Z" },
+]
+
+[[package]]
+name = "scipy"
+version = "1.17.1+ppc64le2"
+source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }
+resolution-markers = [
+    "python_full_version >= '3.12' and platform_machine == 'ppc64le'",
+    "python_version < '0'",
+    "python_full_version == '3.11.*' and platform_machine == 'ppc64le'",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.4+ppc64le1", source = { registry = "https://wheels.developerfirst.ibm.com/ppc64le/linux" }, marker = "python_full_version >= '3.11' and platform_machine == 'ppc64le'" },
+]
+wheels = [
+    { url = "https://wheels.developerfirst.ibm.com/ppc64le/linux/+f/977/d43c826cee297/scipy-1.17.1+ppc64le2-cp311-cp311-manylinux_2_34_ppc64le.whl", hash = "sha256:977d43c826cee297bda13043c8960afc1c9b242be7fca8c34a6a50f24b7c5051" },
+    { url = "https://wheels.developerfirst.ibm.com/ppc64le/linux/+f/142/5ba448f4345dc/scipy-1.17.1+ppc64le2-cp312-cp312-manylinux_2_34_ppc64le.whl", hash = "sha256:1425ba448f4345dcd10ec14628efc3c8f1e94154dcd00c0946d2442d51311611" },
 ]
 
 [[package]]
