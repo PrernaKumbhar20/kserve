@@ -35,12 +35,22 @@ RUN cd kserve && uv sync --active --no-cache
 COPY storage storage
 RUN cd storage && uv pip install . --no-cache
 
-# Install paddleserver dependencies using uv
+# Install paddleserver dependencies using uv with local index for paddlepaddle
 COPY paddleserver/pyproject.toml paddleserver/uv.lock paddleserver/
-RUN cd paddleserver && uv sync --active --no-cache
+RUN cd paddleserver && \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
+        uv sync --active --no-cache --extra-index-url http://10.20.186.132:8000/paddlepaddle/; \
+    else \
+        uv sync --active --no-cache; \
+    fi
 
 COPY paddleserver paddleserver
-RUN cd paddleserver && uv sync --active --no-cache
+RUN cd paddleserver && \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
+        uv sync --active --no-cache --extra-index-url http://10.20.186.132:8000/paddlepaddle/; \
+    else \
+        uv sync --active --no-cache; \
+    fi
 
 # Generate third-party licenses
 COPY pyproject.toml pyproject.toml
