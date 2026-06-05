@@ -25,3 +25,29 @@ test = [
 dev = [
     "black[colorama]~=24.3.0",
 ]
+
+[tool.uv]
+index-strategy = "unsafe-best-match"
+# TODO remove later
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "localindex-wheels"
+url = "http://10.20.186.132:8000/"
+index-strategy = "unsafe-best-match"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+# UV workspace source for local dependency resolution
+[tool.uv.sources]
+kserve-storage = { path = "../storage", editable = true }
+
+paddlepaddle = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "localindex-wheels", marker = "platform_machine == 'ppc64le'" },
+]
