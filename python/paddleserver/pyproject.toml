@@ -26,6 +26,7 @@ dev = [
     "black[colorama]~=24.3.0",
 ]
 
+
 [tool.uv]
 index-strategy = "unsafe-best-match"
 # TODO remove later
@@ -36,7 +37,7 @@ default = true
 
 [[tool.uv.index]]
 name = "localindex-wheels"
-url = "http://10.20.186.132:8000/"
+url = "http://10.20.186.132:8000/paddlepaddle"
 index-strategy = "unsafe-best-match"
 
 [build-system]
