@@ -52,5 +52,5 @@ kserve-storage = { path = "../storage", editable = true }
 
 paddlepaddle = [
     { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "localindex-wheels", marker = "platform_machine == 'ppc64le'" },
+    { url = "http://140.211.168.199:8000/paddlepaddle-3.0.0-cp311-cp311-linux_ppc64le.whl", marker = "platform_machine == 'ppc64le'" },
 ]
