@@ -39,8 +39,8 @@ default = true
 
 [[tool.uv.index]]
 name = "localindex-wheels"
-url = "http://140.211.168.199:8000/paddlepaddle/"
-index-strategy = "unsafe-best-match"
+url = "http://140.211.168.199:8000/"
+explicit = true
 
 [build-system]
 requires = ["setuptools>=61.0"]
