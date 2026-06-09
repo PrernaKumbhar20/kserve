@@ -1504,7 +1504,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ea/83/f3435988cc4cce3764942188ec5c5f92e858012a335642e6740fcb0c3061/paddlepaddle-3.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8677e8d42ff66f74fbca32ff32d8b64bbe3d56ed29a92d43dc418f0f168fcb69", size = 96946375, upload-time = "2025-03-26T08:42:00.907Z" },
     { url = "https://files.pythonhosted.org/packages/01/1d/5dfdda57de184d8406d6757f764a1ecdf26923d78ec7c427cb55b085c4d4/paddlepaddle-3.0.0-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:81a7c5b10150b07521d1cd1491dca1fb76ff621b14db10e899d959f3a77935ea", size = 192856178, upload-time = "2025-03-26T08:45:42.19Z" },
     { url = "https://files.pythonhosted.org/packages/e9/df/4254095dff1e3f87cd8a2be000e39bd1e65118ba3841466b2aeecb480c63/paddlepaddle-3.0.0-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:ddaa996a8b0a00dbe4269da21d65052877ec3693a22ecc07b9cada3ecd116886", size = 92026407, upload-time = "2025-03-26T08:47:30.661Z" },
-    { url = "http://10.20.186.132:8000/paddlepaddle/paddlepaddle-3.0.0-cp311-cp311-linux_ppc64le.whl", hash = "sha256:56d72b73adafd6689a3f7c0cd04a9481cfdfccfb63ef53e1e70c23f02d6fa573", size = 192856178, upload-time = "2025-03-26T08:45:42.19Z" },
 ]
 
 [[package]]
