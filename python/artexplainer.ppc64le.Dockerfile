@@ -28,57 +28,26 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 # ------------------ kserve deps ------------------
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
-# Copy pyproject.toml to temp folder and modify it for power platform
-RUN mkdir -p /tmp/kserve_temp && \
-    cp kserve/pyproject.toml /tmp/kserve_temp/pyproject.toml && \
-    cat >> /tmp/kserve_temp/pyproject.toml << 'EOF'
+# Pre-install ppc64le binary wheels from IBM power-wheels index before uv sync.
+# These packages have no pre-built ppc64le wheel on PyPI, so pip fetches them
+# directly from the IBM devpi mirror. --only-binary=:all: ensures we never fall
+# back to building from source.
+ARG DEVPI_PPC64LE_URL=https://wheels.developerfirst.ibm.com/ppc64le/linux
+RUN pip install --no-cache-dir --only-binary=:all: \
+    --extra-index-url ${DEVPI_PPC64LE_URL} \
+    "grpcio" \
+    "grpcio-tools" \
+    "numpy" \
+    "pandas" \
+    "psutil" \
+    "pyyaml" \
+    "httptools" \
+    "uvloop"
 
-[[tool.uv.index]]
-name = "power-wheels"
-url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
-
-[tool.uv.sources]
-grpcio = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-grpcio_tools = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-numpy = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-pandas = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-psutil = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-pyyaml = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-uvloop = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-EOF
-
-# Generate uv.lock with both PyPI and devpi wheels
-RUN cd /tmp/kserve_temp && uv lock && mv uv.lock /kserve/uv-ppc64le.lock
-
-# Clean up temp folder
-RUN rm -rf /tmp/kserve_temp
-
-# Sync kserve dependencies using ppc64le lock file
-RUN cd kserve && uv sync --active --no-cache --lockfile uv-ppc64le.lock
+RUN cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve
-RUN cd kserve && uv sync --active --no-cache --lockfile uv-ppc64le.lock
+RUN cd kserve && uv sync --active --no-cache
 
 # ------------------ artexplainer deps ------------------
 COPY artexplainer/pyproject.toml artexplainer/uv.lock artexplainer/
