@@ -39,7 +39,8 @@ RUN if [ "${TARGETARCH}" = "ppc64le" ] || [ "$(uname -m)" = "ppc64le" ]; then \
             "psutil>=5.9.6,<6.0.0" \
             "pyyaml>=6.0.0,<7.0.0" \
             "httptools>=0.6.0" \
-            "uvloop>=0.21.0" \
+            "uvloop>=0.21.0" && \
+        pip download --no-deps --dest /tmp/ppc64le-wheels \
             "typing-extensions>=4.12,<5" && \
         uv pip install --no-cache --no-index --find-links=/tmp/ppc64le-wheels \
             grpcio grpcio-tools numpy pandas psutil pyyaml httptools uvloop typing-extensions && \
