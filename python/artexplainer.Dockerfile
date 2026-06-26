@@ -30,7 +30,7 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 RUN if [ "${TARGETARCH}" = "ppc64le" ] || [ "$(uname -m)" = "ppc64le" ]; then \
         mkdir -p /tmp/ppc64le-wheels && \
-        uv pip download --no-deps --dest /tmp/ppc64le-wheels \
+        pip download --no-deps --dest /tmp/ppc64le-wheels \
             --index-url ${DEVPI_PPC64LE_URL} \
             "grpcio>=1.73.0,<2.0.0" \
             "grpcio-tools>=1.73.0,<2.0.0" \
