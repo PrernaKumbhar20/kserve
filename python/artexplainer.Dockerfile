@@ -4,8 +4,13 @@ ARG VENV_PATH=/prod_venv
 
 FROM ${BASE_IMAGE} AS builder
 
+ARG TARGETARCH
+ARG DEVPI_PPC64LE_URL=https://wheels.developerfirst.ibm.com/ppc64le/linux
+
 # Required for building packages for arm64 arch
-RUN apt-get update && apt-get install -y --no-install-recommends curl python3-dev build-essential && apt-get clean && \
+RUN apt-get update && apt-get install -y --no-install-recommends curl python3-dev build-essential && \
+    if [ "$(uname -m)" = "ppc64le" ]; then apt-get install pkg-config libssl-dev gcc gfortran cmake pkg-config libssl-dev libopenblas-dev libjpeg-dev libhdf5-dev wget -y; fi && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Install uv
@@ -23,6 +28,22 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 
 # ------------------ kserve deps ------------------
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
+RUN if [ "${TARGETARCH}" = "ppc64le" ] || [ "$(uname -m)" = "ppc64le" ]; then \
+        mkdir -p /tmp/ppc64le-wheels && \
+        python -m pip download --no-deps --dest /tmp/ppc64le-wheels \
+            --index-url ${DEVPI_PPC64LE_URL} \
+            "grpcio>=1.73.0,<2.0.0" \
+            "grpcio-tools>=1.73.0,<2.0.0" \
+            "numpy>=1.26.0,<3.0.0" \
+            "pandas>=2.2.0,<3.0.0" \
+            "psutil>=5.9.6,<6.0.0" \
+            "pyyaml>=6.0.0,<7.0.0" \
+            "httptools>=0.6.0" \
+            "uvloop>=0.21.0" && \
+        uv pip install --no-cache --no-index --find-links=/tmp/ppc64le-wheels \
+            grpcio grpcio-tools numpy pandas psutil pyyaml httptools uvloop && \
+        rm -rf /tmp/ppc64le-wheels; \
+    fi
 RUN cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve

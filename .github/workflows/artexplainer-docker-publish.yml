@@ -1,10 +1,10 @@
-name: ARTExplainer Docker Publisher
+name: ARTExplainer ppc64le Docker Publisher
 
 on:
   push:
     # Publish `master` as Docker `latest` image.
     branches:
-      - master
+      - art-25-2
 
     # Publish `v1.2.3` tags as releases.
     tags:
@@ -13,11 +13,13 @@ on:
   # Run tests for any PRs.
   pull_request:
     paths:
-      - "python/**"
+      - "python/artexplainer/**"
+      - "python/storage/**"
+      - "python/artexplainer.Dockerfile"
       - "!.github/**"
       - "!docs/**"
       - "!**.md"
-      - ".github/workflows/artexplainer-docker-publish.yml"
+      - ".github/workflows/artexplainer-ppc64le-docker-publish.yml"
       - ".github/actions/free-up-disk-space/**"
   # To save some compute time, rely on PR check and don't run for merge queues
   # merge_group:
@@ -48,7 +50,6 @@ jobs:
           git config user.email "ci@kserve.io"
           git config user.name "CI Bot"
           git merge --no-edit origin/${{ github.event.pull_request.base.ref }}
-
       - name: Free-up disk space
         uses: ./.github/actions/free-up-disk-space
 
@@ -65,14 +66,14 @@ jobs:
       - name: Run tests
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/ppc64le
           context: python
           file: python/artexplainer.Dockerfile
           push: false
           # https://github.com/docker/buildx/issues/1533
           provenance: false
 
-  # Push image to GitHub Packages.
+  # Push image to DockerHub.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
     # Ensure test job passes before pushing image.
@@ -107,26 +108,20 @@ jobs:
       - name: Export version variable
         run: |
           IMAGE_ID=kserve/$IMAGE_NAME
-
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
-
           # Strip git ref prefix from version
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
-
           # Strip "v" prefix from tag name
           # [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
-
           # Use Docker `latest` tag convention
           [ "$VERSION" == "master" ] && VERSION=latest
-
           echo VERSION=$VERSION >> $GITHUB_ENV
           echo IMAGE_ID=$IMAGE_ID >> $GITHUB_ENV
-
       - name: Build and push
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/ppc64le
           context: python
           file: python/artexplainer.Dockerfile
           push: true
