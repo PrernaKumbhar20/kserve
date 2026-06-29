@@ -28,32 +28,18 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 # ------------------ kserve deps ------------------
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
-# Migrate kserve pyproject.toml from legacy index style to new [[tool.uv.index]] style
-# for ppc64le: remove old index-url/extra-index-url keys, then append named indexes
-# (pypi as default + ppc64le-wheels from DevPI) and ppc64le-specific sources.
+# Transform kserve pyproject.toml for ppc64le:
+#   1. Remove legacy index-url / extra-index-url keys from [tool.uv]
+#   2. Inject ppc64le sources after kserve-storage inside existing [tool.uv.sources]
+#   3. Append [[tool.uv.index]] entries (array-of-tables — no duplicate key issue)
 RUN mkdir -p /tmp/kserve_temp && \
     cp kserve/pyproject.toml /tmp/kserve_temp/pyproject.toml && \
-    sed -i '/^index-url\s*=/d; /^extra-index-url\s*=/d' /tmp/kserve_temp/pyproject.toml && \
-    cat >> /tmp/kserve_temp/pyproject.toml << 'EOF'
-
-[[tool.uv.index]]
-name = "pypi"
-url = "https://pypi.org/simple"
-default = true
-
-[[tool.uv.index]]
-name = "ppc64le-wheels"
-url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
-
-[tool.uv.sources]
-grpcio = { index = "ppc64le-wheels" }
-grpcio-tools = { index = "ppc64le-wheels" }
-numpy = { index = "ppc64le-wheels" }
-pandas = { index = "ppc64le-wheels" }
-psutil = { index = "ppc64le-wheels" }
-pyyaml = { index = "ppc64le-wheels" }
-uvloop = { index = "ppc64le-wheels" }
-EOF
+    sed -i \
+        -e '/^index-url\s*=/d' \
+        -e '/^extra-index-url\s*=/d' \
+        -e '/^index-strategy\s*=.*/a \\n[[tool.uv.index]]\nname = "pypi"\nurl = "https://pypi.org/simple"\ndefault = true\n\n[[tool.uv.index]]\nname = "ppc64le-wheels"\nurl = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
+        /tmp/kserve_temp/pyproject.toml
 
 # Generate ppc64le uv.lock and promote it back into the kserve/ dir
 RUN cd /tmp/kserve_temp && uv lock && \
