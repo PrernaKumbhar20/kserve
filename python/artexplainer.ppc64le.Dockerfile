@@ -58,8 +58,8 @@ RUN cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve
 # Re-apply the generated ppc64le pyproject.toml + uv.lock after COPY overwrites them
-RUN cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
-    cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock
+#RUN cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
+#    cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock
 # Full sync with complete source tree using the ppc64le-aware pyproject.toml + uv.lock
 RUN cd kserve && uv sync --active --no-cache
 
