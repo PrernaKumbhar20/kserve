@@ -37,9 +37,7 @@ RUN mkdir -p /tmp/kserve_temp && \
     cp storage/pyproject.toml /tmp/storage/pyproject.toml && \
     cp kserve/pyproject.toml /tmp/kserve_temp/pyproject.toml && \
     sed -i \
-        #-e '/^index-url\s*=/d' \
-        #-e '/^extra-index-url\s*=/d' \
-        -e '/^index-strategy\s*=.*/a \n[[tool.uv.index]]\nname = "ppc64le-wheels"\nurl = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        -e '/^index-strategy\s*=.*/a \\\n\n[[tool.uv.index]]\nname = "ppc64le-wheels"\nurl = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
         -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
         /tmp/kserve_temp/pyproject.toml
 
