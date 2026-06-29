@@ -28,11 +28,12 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 # ------------------ kserve deps ------------------
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
-# Append ppc64le-specific index and sources to a temp copy of pyproject.toml,
-# then generate a new uv.lock that pulls binary wheels from DevPI for ppc64le.
-# environments restricts the lock to ppc64le only, so no PyPI markers are needed.
+# Migrate kserve pyproject.toml from legacy index style to new [[tool.uv.index]] style
+# for ppc64le: remove old index-url/extra-index-url keys, then append named indexes
+# (pypi as default + ppc64le-wheels from DevPI) and ppc64le-specific sources.
 RUN mkdir -p /tmp/kserve_temp && \
     cp kserve/pyproject.toml /tmp/kserve_temp/pyproject.toml && \
+    sed -i '/^index-url\s*=/d; /^extra-index-url\s*=/d' /tmp/kserve_temp/pyproject.toml && \
     cat >> /tmp/kserve_temp/pyproject.toml << 'EOF'
 
 [[tool.uv.index]]
