@@ -36,20 +36,22 @@ RUN mkdir -p /tmp/kserve_temp && \
     cat >> /tmp/kserve_temp/pyproject.toml << 'EOF'
 
 [[tool.uv.index]]
-name = "power-wheels"
+name = "pypi"
+url = "https://pypi.org/simple"
+default = true
+
+[[tool.uv.index]]
+name = "ppc64le-wheels"
 url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
 
-[tool.uv]
-environments = ["platform_machine == 'ppc64le'"]
-
 [tool.uv.sources]
-grpcio = { index = "power-wheels" }
-grpcio-tools = { index = "power-wheels" }
-numpy = { index = "power-wheels" }
-pandas = { index = "power-wheels" }
-psutil = { index = "power-wheels" }
-pyyaml = { index = "power-wheels" }
-uvloop = { index = "power-wheels" }
+grpcio = { index = "ppc64le-wheels" }
+grpcio-tools = { index = "ppc64le-wheels" }
+numpy = { index = "ppc64le-wheels" }
+pandas = { index = "ppc64le-wheels" }
+psutil = { index = "ppc64le-wheels" }
+pyyaml = { index = "ppc64le-wheels" }
+uvloop = { index = "ppc64le-wheels" }
 EOF
 
 # Generate ppc64le uv.lock and promote it back into the kserve/ dir
