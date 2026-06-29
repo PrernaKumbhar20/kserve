@@ -43,8 +43,10 @@ RUN mkdir -p /tmp/kserve_temp && \
         -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
         /tmp/kserve_temp/pyproject.toml
 
-# Generate ppc64le uv.lock and promote it back into the kserve/ dir
+# Generate ppc64le uv.lock, save copies to /tmp for reuse after COPY, and promote into kserve/
 RUN cd /tmp/kserve_temp && uv lock && \
+    cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
+    cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml && \
     cp uv.lock /kserve/uv.lock && \
     cp pyproject.toml /kserve/pyproject.toml
 
@@ -55,6 +57,9 @@ RUN rm -rf /tmp/kserve_temp
 RUN cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve
+# Re-apply the generated ppc64le pyproject.toml + uv.lock after COPY overwrites them
+RUN cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
+    cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock
 # Full sync with complete source tree using the ppc64le-aware pyproject.toml + uv.lock
 RUN cd kserve && uv sync --active --no-cache
 
