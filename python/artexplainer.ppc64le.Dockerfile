@@ -48,6 +48,10 @@ RUN cd /tmp/kserve_temp && uv lock && \
     cp uv.lock /kserve/uv.lock && \
     cp pyproject.toml /kserve/pyproject.toml
 
+# DEBUG: print generated pyproject.toml and uv.lock
+RUN echo "===== pyproject.toml =====" && cat /kserve/pyproject.toml && \
+    echo "===== uv.lock =====" && cat /kserve/uv.lock
+
 # Clean up temp folder
 RUN rm -rf /tmp/kserve_temp
 
