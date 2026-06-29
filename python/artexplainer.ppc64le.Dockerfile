@@ -70,9 +70,53 @@ RUN cd kserve && uv sync --active --no-cache
 
 # ------------------ artexplainer deps ------------------
 COPY artexplainer/pyproject.toml artexplainer/uv.lock artexplainer/
+
+# Transform artexplainer pyproject.toml for ppc64le:
+#   No existing [tool.uv] or [tool.uv.sources] — append everything fresh via cat >>.
+#   kserve dependency uses ../kserve path — symlink /kserve so it resolves from /tmp/artexplainer_temp/.
+RUN mkdir -p /tmp/artexplainer_temp && \
+    ln -s /kserve /tmp/kserve && \
+    cp artexplainer/pyproject.toml /tmp/artexplainer_temp/pyproject.toml && \
+    cat >> /tmp/artexplainer_temp/pyproject.toml << 'EOF'
+
+[[tool.uv.index]]
+name = "ppc64le-wheels"
+url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
+
+[tool.uv.sources]
+grpcio = { index = "ppc64le-wheels" }
+grpcio-tools = { index = "ppc64le-wheels" }
+scipy = { index = "ppc64le-wheels" }
+numpy = { index = "ppc64le-wheels" }
+pandas = { index = "ppc64le-wheels" }
+psutil = { index = "ppc64le-wheels" }
+pyyaml = { index = "ppc64le-wheels" }
+uvloop = { index = "ppc64le-wheels" }
+httptools = { index = "ppc64le-wheels" }
+scikit-learn = { index = "ppc64le-wheels" }
+pillow = { index = "ppc64le-wheels" }
+h5py = { index = "ppc64le-wheels" }
+ml-dtypes = { index = "ppc64le-wheels" }
+EOF
+
+# Generate ppc64le uv.lock and promote into artexplainer/
+RUN cd /tmp/artexplainer_temp && uv lock && \
+    cp uv.lock /tmp/artexplainer_ppc64le_uv.lock && \
+    cp pyproject.toml /tmp/artexplainer_ppc64le_pyproject.toml && \
+    cp uv.lock /artexplainer/uv.lock && \
+    cp pyproject.toml /artexplainer/pyproject.toml
+
+# Clean up temp folder
+RUN rm -rf /tmp/artexplainer_temp /tmp/kserve
+
+# Metadata-only sync (pyproject.toml + updated uv.lock, no source tree yet)
 RUN cd artexplainer && uv sync --active --no-cache
 
 COPY artexplainer artexplainer
+# Re-apply ppc64le files after COPY overwrites them
+RUN cp /tmp/artexplainer_ppc64le_pyproject.toml artexplainer/pyproject.toml && \
+    cp /tmp/artexplainer_ppc64le_uv.lock artexplainer/uv.lock
+# Full sync with complete source tree
 RUN cd artexplainer && uv sync --active --no-cache
 
 # Generate third-party licenses
