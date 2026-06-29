@@ -33,6 +33,8 @@ COPY kserve/pyproject.toml kserve/uv.lock kserve/
 #   2. Inject ppc64le sources after kserve-storage inside existing [tool.uv.sources]
 #   3. Append [[tool.uv.index]] entries (array-of-tables — no duplicate key issue)
 RUN mkdir -p /tmp/kserve_temp && \
+    mkdir -p /tmp/storage && \
+    cp storage/pyproject.toml /tmp/storage/pyproject.toml && \
     cp kserve/pyproject.toml /tmp/kserve_temp/pyproject.toml && \
     sed -i \
         -e '/^index-url\s*=/d' \
