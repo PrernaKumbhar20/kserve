@@ -29,62 +29,66 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
 # Generate a uv.lock that includes both PyPI wheels (amd64/arm64) AND IBM
-# power-wheels (ppc64le) entries. Steps:
-# 1. Copy pyproject.toml + uv.lock into a temp dir
-# 2. Append the IBM index + platform-conditional [tool.uv.sources] to pyproject.toml
-# 3. Run `uv lock --upgrade-package` for only the ppc64le packages — this adds
-#    ppc64le wheel entries from the IBM mirror into the lock while keeping all
-#    existing PyPI entries intact
-# 4. Overwrite kserve/uv.lock with the updated lock so uv sync uses it
-# NOTE: This runs inside the QEMU-emulated ppc64le container, so uv correctly
-# identifies the platform as ppc64le and resolves IBM mirror wheels for it.
-RUN mkdir -p /tmp/kserve_temp && \
+# power-wheels (ppc64le) entries.
+# kserve/pyproject.toml already has [tool.uv.sources] and possibly [tool.uv.index],
+# so we cannot blindly append — that causes duplicate TOML key errors.
+# Instead, use Python (tomllib + tomli_w) to surgically merge the ppc64le
+# entries into the existing sections before running uv lock.
+RUN pip install --quiet tomli-w && \
+    mkdir -p /tmp/kserve_temp && \
     cp kserve/pyproject.toml kserve/uv.lock /tmp/kserve_temp/ && \
-    cat >> /tmp/kserve_temp/pyproject.toml << 'EOF'
+    python3 - << 'PYEOF'
+import tomllib, tomli_w, copy
 
-[[tool.uv.index]]
-name = "power-wheels"
-url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
+with open("/tmp/kserve_temp/pyproject.toml", "rb") as f:
+    data = tomllib.load(f)
 
-[tool.uv.sources]
-grpcio = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-grpcio_tools = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-numpy = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-pandas = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-psutil = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-pyyaml = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-uvloop = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-httptools = [
-    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
-    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
-]
-EOF
+tool_uv = data.setdefault("tool", {}).setdefault("uv", {})
 
-RUN cd /tmp/kserve_temp && uv lock && mv uv.lock /kserve/uv-ppc64le.lock
-RUN rm -rf /tmp/kserve_temp
-RUN cd kserve && uv sync --active --no-cache
+# Add IBM power-wheels index if not already present
+indexes = tool_uv.setdefault("index", [])
+if not any(i.get("name") == "power-wheels" for i in indexes):
+    indexes.append({
+        "name": "power-wheels",
+        "url": "https://wheels.developerfirst.ibm.com/ppc64le/linux"
+    })
 
+# Packages to redirect to IBM mirror on ppc64le
+ppc_packages = [
+    "grpcio", "grpcio-tools", "numpy", "pandas",
+    "psutil", "pyyaml", "uvloop", "httptools"
+]
+
+sources = tool_uv.setdefault("sources", {})
+for pkg in ppc_packages:
+    key = pkg.replace("-", "_")
+    sources[key] = [
+        {"index": "pypi",         "marker": "platform_machine != 'ppc64le'"},
+        {"index": "power-wheels", "marker": "platform_machine == 'ppc64le'"},
+    ]
+
+with open("/tmp/kserve_temp/pyproject.toml", "wb") as f:
+    tomli_w.dump(data, f)
+PYEOF
+
+# uv lock now runs with the correctly merged pyproject.toml — no duplicate keys.
+# The existing uv.lock seed keeps all non-ppc64le packages pinned; only the
+# ppc64le packages are re-resolved against the IBM mirror.
+RUN cd /tmp/kserve_temp && \
+    uv lock \
+        --upgrade-package grpcio \
+        --upgrade-package grpcio-tools \
+        --upgrade-package numpy \
+        --upgrade-package pandas \
+        --upgrade-package psutil \
+        --upgrade-package pyyaml \
+        --upgrade-package uvloop \
+        --upgrade-package httptools && \
+    cp uv.lock /kserve/uv.lock && \
+    rm -rf /tmp/kserve_temp
+
+# Sync kserve dependencies using the updated lock
+RUN cd kserve && uv sync --active --no-cache --frozen
 
 COPY kserve kserve
 RUN cd kserve && uv sync --active --no-cache --frozen
