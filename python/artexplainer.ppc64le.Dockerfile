@@ -33,8 +33,6 @@ COPY kserve/pyproject.toml kserve/uv.lock kserve/
 #   2. Inject ppc64le sources after kserve-storage inside existing [tool.uv.sources]
 #   3. Append [[tool.uv.index]] entries (array-of-tables — no duplicate key issue)
 RUN mkdir -p /tmp/kserve_temp && \
-    mkdir -p /tmp/storage && \
-    cp storage/pyproject.toml /tmp/storage/pyproject.toml && \
     cp kserve/pyproject.toml /tmp/kserve_temp/pyproject.toml && \
     sed -i \
         -e '/^index-url\s*=/d' \
@@ -58,8 +56,8 @@ RUN cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve
 # Re-apply the generated ppc64le pyproject.toml + uv.lock after COPY overwrites them
-#RUN cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
-#    cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock
+RUN cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
+    cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock
 # Full sync with complete source tree using the ppc64le-aware pyproject.toml + uv.lock
 RUN cd kserve && uv sync --active --no-cache
 
