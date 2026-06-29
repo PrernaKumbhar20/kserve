@@ -28,9 +28,19 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 # ------------------ kserve deps ------------------
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
-# Copy pyproject.toml to temp folder and modify it for power platform
+# Generate a uv.lock that includes both PyPI wheels (amd64/arm64) AND IBM
+# power-wheels (ppc64le) entries. Steps:
+# 1. Copy pyproject.toml + uv.lock into a temp dir
+# 2. Append the IBM index + platform-conditional [tool.uv.sources] to pyproject.toml
+# 3. Run `uv lock --upgrade-package` for only the ppc64le packages — this adds
+#    ppc64le wheel entries from the IBM mirror into the lock while keeping all
+#    existing PyPI entries intact
+# 4. Overwrite kserve/uv.lock with the updated lock so uv sync uses it
+# NOTE: This runs inside the QEMU-emulated ppc64le container, so uv correctly
+# identifies the platform as ppc64le and resolves IBM mirror wheels for it.
+ARG DEVPI_PPC64LE_URL=https://wheels.developerfirst.ibm.com/ppc64le/linux
 RUN mkdir -p /tmp/kserve_temp && \
-    cp kserve/pyproject.toml /tmp/kserve_temp/pyproject.toml && \
+    cp kserve/pyproject.toml kserve/uv.lock /tmp/kserve_temp/ && \
     cat >> /tmp/kserve_temp/pyproject.toml << 'EOF'
 
 [[tool.uv.index]]
@@ -66,19 +76,30 @@ uvloop = [
     { index = "pypi", marker = "platform_machine != 'ppc64le'" },
     { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
 ]
+httptools = [
+    { index = "pypi", marker = "platform_machine != 'ppc64le'" },
+    { index = "power-wheels", marker = "platform_machine == 'ppc64le'" },
+]
 EOF
 
-# Generate uv-ppc64le.lock from the patched pyproject.toml, then overwrite
-# kserve/uv.lock with it so that uv sync picks up ppc64le wheels automatically.
-# uv sync always reads uv.lock from the project dir — there is no CLI flag to
-# point it at a different lock file, so replacing it is the only correct approach.
-# The original kserve/uv.lock on disk (outside Docker) is NOT affected.
-RUN cd /tmp/kserve_temp && uv lock && mv uv.lock /kserve/uv.lock
+# Run uv lock inside the temp dir. The existing uv.lock seed means uv only
+# needs to resolve the newly added ppc64le sources — all other packages stay
+# pinned. The result contains wheel entries for ALL platforms.
+RUN cd /tmp/kserve_temp && \
+    uv lock \
+        --upgrade-package grpcio \
+        --upgrade-package grpcio-tools \
+        --upgrade-package numpy \
+        --upgrade-package pandas \
+        --upgrade-package psutil \
+        --upgrade-package pyyaml \
+        --upgrade-package uvloop \
+        --upgrade-package httptools && \
+    cp uv.lock /kserve/uv.lock && \
+    rm -rf /tmp/kserve_temp
 
-# Clean up temp folder
-RUN rm -rf /tmp/kserve_temp
-
-# Sync kserve dependencies — now reads the ppc64le lock (IBM mirror wheels)
+# Sync kserve dependencies using the updated lock (contains IBM mirror wheels
+# for ppc64le — uv picks the correct wheel per platform marker)
 RUN cd kserve && uv sync --active --no-cache --frozen
 
 COPY kserve kserve
