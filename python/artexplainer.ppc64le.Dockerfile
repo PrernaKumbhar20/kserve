@@ -42,6 +42,9 @@ RUN mkdir -p /tmp/kserve_temp && \
         -e '/^index-strategy\s*=.*/a name = "ppc64le-wheels"' \
         -e '/^index-strategy\s*=.*/a url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
         -e '/^index-strategy\s*=.*/a explicit = true' \
+        -e '/^\s*"pyasn1>=[^,]*"$/s/"$/",/' \
+        -e '/^\s*"pyasn1>=/a\    "httptools",' \
+        -e '/^\s*"pyasn1>=/a\    "uvloop",' \
         -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
         /tmp/kserve_temp/pyproject.toml
 
@@ -78,7 +81,11 @@ COPY artexplainer/pyproject.toml artexplainer/uv.lock artexplainer/
 RUN mkdir -p /tmp/artexplainer_temp && \
     ln -s /kserve /tmp/kserve && \
     cp artexplainer/pyproject.toml /tmp/artexplainer_temp/pyproject.toml && \
-    sed -i '/^    "h5py/a\    "scikit-learn",' /tmp/artexplainer_temp/pyproject.toml && \
+    sed -i \
+        -e '/^    "h5py/a\    "scikit-learn",' \
+        -e '/^    "h5py/a\    "scipy",' \
+        -e '/^    "h5py/a\    "ml-dtypes",' \
+        /tmp/artexplainer_temp/pyproject.toml && \
     cat >> /tmp/artexplainer_temp/pyproject.toml << 'EOF'
 
 [[tool.uv.index]]
