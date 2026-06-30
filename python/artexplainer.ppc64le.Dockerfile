@@ -41,6 +41,7 @@ RUN mkdir -p /tmp/kserve_temp && \
         -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
         -e '/^index-strategy\s*=.*/a name = "ppc64le-wheels"' \
         -e '/^index-strategy\s*=.*/a url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        -e '/^index-strategy\s*=.*/a explicit = true' \
         -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
         /tmp/kserve_temp/pyproject.toml
 
@@ -80,12 +81,10 @@ RUN mkdir -p /tmp/artexplainer_temp && \
     sed -i '/^    "h5py/a\    "scikit-learn",' /tmp/artexplainer_temp/pyproject.toml && \
     cat >> /tmp/artexplainer_temp/pyproject.toml << 'EOF'
 
-[tool.uv]
-index-strategy = "unsafe-best-match"
-
 [[tool.uv.index]]
 name = "ppc64le-wheels"
 url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
+explicit = true
 
 [tool.uv.sources]
 grpcio = { index = "ppc64le-wheels" }
