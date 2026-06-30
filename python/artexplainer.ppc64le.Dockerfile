@@ -73,28 +73,7 @@ RUN mkdir -p /tmp/artexplainer_temp && \
         -e '/^    "h5py/a\    "scipy",' \
         -e '/^    "h5py/a\    "ml-dtypes",' \
         /tmp/artexplainer_temp/pyproject.toml && \
-    cat >> /tmp/artexplainer_temp/pyproject.toml << 'EOF'
-
-[[tool.uv.index]]
-name = "ppc64le-wheels"
-url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
-explicit = true
-
-[tool.uv.sources]
-grpcio = { index = "ppc64le-wheels" }
-grpcio-tools = { index = "ppc64le-wheels" }
-scipy = { index = "ppc64le-wheels" }
-numpy = { index = "ppc64le-wheels" }
-pandas = { index = "ppc64le-wheels" }
-psutil = { index = "ppc64le-wheels" }
-pyyaml = { index = "ppc64le-wheels" }
-uvloop = { index = "ppc64le-wheels" }
-httptools = { index = "ppc64le-wheels" }
-scikit-learn = { index = "ppc64le-wheels" }
-pillow = { index = "ppc64le-wheels" }
-h5py = { index = "ppc64le-wheels" }
-ml-dtypes = { index = "ppc64le-wheels" }
-EOF
+    printf '\n[[tool.uv.index]]\nname = "ppc64le-wheels"\nurl = "https://wheels.developerfirst.ibm.com/ppc64le/linux"\nexplicit = true\n\n[tool.uv.sources]\ngrpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nscipy = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nscikit-learn = { index = "ppc64le-wheels" }\npillow = { index = "ppc64le-wheels" }\nh5py = { index = "ppc64le-wheels" }\nml-dtypes = { index = "ppc64le-wheels" }\n' >> /tmp/artexplainer_temp/pyproject.toml
 
 # Generate ppc64le uv.lock and promote into artexplainer/
 RUN cd /tmp/artexplainer_temp && uv lock && \
