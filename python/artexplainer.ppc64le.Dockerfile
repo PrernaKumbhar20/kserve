@@ -8,7 +8,7 @@ FROM ${BASE_IMAGE} AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl python3-dev build-essential \
     pkg-config libssl-dev gcc gfortran cmake \
-    libopenblas-dev libjpeg-dev libhdf5-dev wget && \
+    libopenblas-dev libjpeg-dev libhdf5-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -28,10 +28,6 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 # ------------------ kserve deps ------------------
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
-# Transform kserve pyproject.toml for ppc64le:
-#   1. Remove legacy index-url / extra-index-url keys from [tool.uv]
-#   2. Inject ppc64le sources after kserve-storage inside existing [tool.uv.sources]
-#   3. Append [[tool.uv.index]] entries (array-of-tables — no duplicate key issue)
 RUN mkdir -p /tmp/kserve_temp && \
     mkdir -p /tmp/storage && \
     cp storage/pyproject.toml /tmp/storage/pyproject.toml && \
@@ -53,10 +49,8 @@ RUN cd /tmp/kserve_temp && uv lock && \
     cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml && \
     cp uv.lock /kserve/uv.lock && \
-    cp pyproject.toml /kserve/pyproject.toml
-
-# Clean up temp folder
-RUN rm -rf /tmp/kserve_temp
+    cp pyproject.toml /kserve/pyproject.toml && \
+    rm -rf /tmp/kserve_temp /tmp/storage
 
 # Metadata-only sync (pyproject.toml + updated uv.lock, no source tree yet)
 RUN cd kserve && uv sync --active --no-cache
@@ -65,15 +59,12 @@ COPY kserve kserve
 # Re-apply the generated ppc64le pyproject.toml + uv.lock after COPY overwrites them
 RUN cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
     cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock
+
 # Full sync with complete source tree using the ppc64le-aware pyproject.toml + uv.lock
 RUN cd kserve && uv sync --active --no-cache
 
 # ------------------ artexplainer deps ------------------
 COPY artexplainer/pyproject.toml artexplainer/uv.lock artexplainer/
-
-# Transform artexplainer pyproject.toml for ppc64le:
-#   No existing [tool.uv] or [tool.uv.sources] — append everything fresh via cat >>.
-#   kserve dependency uses ../kserve path — symlink /kserve so it resolves from /tmp/artexplainer_temp/.
 RUN mkdir -p /tmp/artexplainer_temp && \
     ln -s /kserve /tmp/kserve && \
     cp artexplainer/pyproject.toml /tmp/artexplainer_temp/pyproject.toml && \
@@ -110,18 +101,18 @@ RUN cd /tmp/artexplainer_temp && uv lock && \
     cp uv.lock /tmp/artexplainer_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/artexplainer_ppc64le_pyproject.toml && \
     cp uv.lock /artexplainer/uv.lock && \
-    cp pyproject.toml /artexplainer/pyproject.toml
-
-# Clean up temp folder
-RUN rm -rf /tmp/artexplainer_temp /tmp/kserve
+    cp pyproject.toml /artexplainer/pyproject.toml && \
+    rm -rf /tmp/artexplainer_temp /tmp/kserve
 
 # Metadata-only sync (pyproject.toml + updated uv.lock, no source tree yet)
 RUN cd artexplainer && uv sync --active --no-cache
 
 COPY artexplainer artexplainer
-# Re-apply ppc64le files after COPY overwrites them
+# Re-apply ppc64le files after COPY overwrites them, sync, then clean up tmp backups
 RUN cp /tmp/artexplainer_ppc64le_pyproject.toml artexplainer/pyproject.toml && \
-    cp /tmp/artexplainer_ppc64le_uv.lock artexplainer/uv.lock
+    cp /tmp/artexplainer_ppc64le_uv.lock artexplainer/uv.lock && \
+    rm -f /tmp/artexplainer_ppc64le_pyproject.toml /tmp/artexplainer_ppc64le_uv.lock \
+          /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock
 # Full sync with complete source tree
 RUN cd artexplainer && uv sync --active --no-cache
 
@@ -129,8 +120,8 @@ RUN cd artexplainer && uv sync --active --no-cache
 COPY pyproject.toml pyproject.toml
 COPY third_party/pip-licenses.py pip-licenses.py
 # TODO: Remove this when upgrading to python 3.11+
-RUN pip install --no-cache-dir tomli
-RUN mkdir -p third_party/library && python3 pip-licenses.py
+RUN pip install --no-cache-dir tomli && \
+    mkdir -p third_party/library && python3 pip-licenses.py
 
 
 # ------------------ Production stage ------------------
