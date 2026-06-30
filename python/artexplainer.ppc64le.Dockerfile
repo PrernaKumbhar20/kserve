@@ -79,6 +79,9 @@ RUN mkdir -p /tmp/artexplainer_temp && \
     cp artexplainer/pyproject.toml /tmp/artexplainer_temp/pyproject.toml && \
     cat >> /tmp/artexplainer_temp/pyproject.toml << 'EOF'
 
+[tool.uv]
+index-strategy = "unsafe-best-match"
+
 [[tool.uv.index]]
 name = "ppc64le-wheels"
 url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"
