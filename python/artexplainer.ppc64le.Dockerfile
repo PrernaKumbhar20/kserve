@@ -55,10 +55,6 @@ RUN cd /tmp/kserve_temp && uv lock && \
     cp uv.lock /kserve/uv.lock && \
     cp pyproject.toml /kserve/pyproject.toml
 
-# DEBUG: print generated pyproject.toml and uv.lock
-RUN echo "===== pyproject.toml =====" && cat /kserve/pyproject.toml
-RUN echo "===== uv.lock =====" && cat /kserve/uv.lock
-
 # Clean up temp folder
 RUN rm -rf /tmp/kserve_temp
 
@@ -109,9 +105,6 @@ h5py = { index = "ppc64le-wheels" }
 ml-dtypes = { index = "ppc64le-wheels" }
 EOF
 
-# DEBUG: print generated artexplainer pyproject.toml
-RUN echo "===== artexplainer pyproject.toml =====" && cat /tmp/artexplainer_temp/pyproject.toml
-
 # Generate ppc64le uv.lock and promote into artexplainer/
 RUN cd /tmp/artexplainer_temp && uv lock && \
     cp uv.lock /tmp/artexplainer_ppc64le_uv.lock && \
@@ -119,14 +112,8 @@ RUN cd /tmp/artexplainer_temp && uv lock && \
     cp uv.lock /artexplainer/uv.lock && \
     cp pyproject.toml /artexplainer/pyproject.toml
 
-# DEBUG: print generated uv.lock
-RUN echo "===== artexplainer uv.lock =====" && cat /tmp/artexplainer_ppc64le_uv.lock
-
 # Clean up temp folder
 RUN rm -rf /tmp/artexplainer_temp /tmp/kserve
-
-# DEBUG: print generated pyproject.toml and uv.lock
-RUN echo "===== pyproject.toml =====" && cat /kserve/pyproject.toml 
 
 # Metadata-only sync (pyproject.toml + updated uv.lock, no source tree yet)
 RUN cd artexplainer && uv sync --active --no-cache
