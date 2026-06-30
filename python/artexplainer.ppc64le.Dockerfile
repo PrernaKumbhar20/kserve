@@ -77,6 +77,7 @@ COPY artexplainer/pyproject.toml artexplainer/uv.lock artexplainer/
 RUN mkdir -p /tmp/artexplainer_temp && \
     ln -s /kserve /tmp/kserve && \
     cp artexplainer/pyproject.toml /tmp/artexplainer_temp/pyproject.toml && \
+    sed -i '/^    "h5py/a\    "scikit-learn",' /tmp/artexplainer_temp/pyproject.toml && \
     cat >> /tmp/artexplainer_temp/pyproject.toml << 'EOF'
 
 [tool.uv]
@@ -102,12 +103,18 @@ h5py = { index = "ppc64le-wheels" }
 ml-dtypes = { index = "ppc64le-wheels" }
 EOF
 
+# DEBUG: print generated artexplainer pyproject.toml
+RUN echo "===== artexplainer pyproject.toml =====" && cat /tmp/artexplainer_temp/pyproject.toml
+
 # Generate ppc64le uv.lock and promote into artexplainer/
 RUN cd /tmp/artexplainer_temp && uv lock && \
     cp uv.lock /tmp/artexplainer_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/artexplainer_ppc64le_pyproject.toml && \
     cp uv.lock /artexplainer/uv.lock && \
     cp pyproject.toml /artexplainer/pyproject.toml
+
+# DEBUG: print generated uv.lock
+RUN echo "===== artexplainer uv.lock =====" && cat /tmp/artexplainer_ppc64le_uv.lock
 
 # Clean up temp folder
 RUN rm -rf /tmp/artexplainer_temp /tmp/kserve
