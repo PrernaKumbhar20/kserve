@@ -48,6 +48,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 # Metadata-only sync (pyproject.toml + uv.lock, no source tree yet)
 RUN cd kserve && uv sync --active --no-cache
 
+RUN rm -f kserve/pyproject.toml kserve/uv.lock
 COPY kserve kserve
 
 # On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them
@@ -100,6 +101,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 # Metadata-only sync (pyproject.toml + uv.lock, no source tree yet)
 RUN cd artexplainer && uv sync --active --no-cache
 
+RUN rm -f artexplainer/pyproject.toml artexplainer/uv.lock
 COPY artexplainer artexplainer
 
 # On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them, then clean up
