@@ -45,16 +45,10 @@ RUN sed -i \
         -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
         kserve/pyproject.toml
 
-# DEBUG: print kserve pyproject.toml after transformation
-RUN echo "===== kserve pyproject.toml =====" && cat kserve/pyproject.toml
-
 # Generate ppc64le uv.lock from /kserve/ directly, save backup to /tmp/
 RUN cd kserve && uv lock && \
     cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml
-
-# DEBUG: print kserve uv.lock after generation
-RUN echo "===== kserve uv.lock =====" && cat kserve/uv.lock
 
 # Metadata-only sync (pyproject.toml + updated uv.lock, no source tree yet)
 RUN cd kserve && uv sync --active --no-cache
@@ -101,16 +95,10 @@ RUN sed -i \
         'ml-dtypes = { index = "ppc64le-wheels" }' \
         >> artexplainer/pyproject.toml
 
-# DEBUG: print artexplainer pyproject.toml after transformation
-RUN echo "===== artexplainer pyproject.toml =====" && cat artexplainer/pyproject.toml
-
 # Generate ppc64le uv.lock from /artexplainer/ directly, save backup to /tmp/
 RUN cd artexplainer && uv lock && \
     cp uv.lock /tmp/artexplainer_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/artexplainer_ppc64le_pyproject.toml
-
-# DEBUG: print artexplainer uv.lock after generation
-RUN echo "===== artexplainer uv.lock =====" && cat artexplainer/uv.lock
 
 # Metadata-only sync (pyproject.toml + updated uv.lock, no source tree yet)
 RUN cd artexplainer && uv sync --active --no-cache
