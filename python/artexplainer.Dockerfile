@@ -36,8 +36,8 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             -e '/^index-strategy\s*=.*/a url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
             -e '/^index-strategy\s*=.*/a explicit = true' \
             -e '/^\s*"pyasn1>=[^,]*"$/s/"$/",/' \
-            -e '/^\s*"pyasn1>=/a\    "httptools",' \
-            -e '/^\s*"pyasn1>=/a\    "uvloop",' \
+            -e '/^\s*"pyasn1>=/a\    "httptools==0.6.4",' \
+            -e '/^\s*"pyasn1>=/a\    "uvloop==0.21.0",' \
             -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
             kserve/pyproject.toml && \
         cd kserve && uv lock && \
@@ -48,11 +48,11 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 # Metadata-only sync (pyproject.toml + uv.lock, no source tree yet)
 RUN cd kserve && uv sync --active --no-cache
 
-RUN rm -f kserve/pyproject.toml kserve/uv.lock
 COPY kserve kserve
 
 # On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        rm -f kserve/pyproject.toml kserve/uv.lock && \
         cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
         cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock; \
     fi
@@ -67,9 +67,9 @@ COPY artexplainer/pyproject.toml artexplainer/uv.lock artexplainer/
 # then regenerate uv.lock before syncing.
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
-            -e '/^    "h5py/a\    "scikit-learn",' \
-            -e '/^    "h5py/a\    "scipy",' \
-            -e '/^    "h5py/a\    "ml-dtypes",' \
+            -e '/^    "h5py/a\    "scikit-learn==1.6.1",' \
+            -e '/^    "h5py/a\    "scipy==1.15.2",' \
+            -e '/^    "h5py/a\    "ml-dtypes==0.5.1",' \
             artexplainer/pyproject.toml && \
         printf '%s\n' \
             '' \
@@ -101,11 +101,11 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 # Metadata-only sync (pyproject.toml + uv.lock, no source tree yet)
 RUN cd artexplainer && uv sync --active --no-cache
 
-RUN rm -f artexplainer/pyproject.toml artexplainer/uv.lock
 COPY artexplainer artexplainer
 
 # On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them, then clean up
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        rm -f artexplainer/pyproject.toml artexplainer/uv.lock && \
         cp /tmp/artexplainer_ppc64le_pyproject.toml artexplainer/pyproject.toml && \
         cp /tmp/artexplainer_ppc64le_uv.lock artexplainer/uv.lock && \
         rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock \
