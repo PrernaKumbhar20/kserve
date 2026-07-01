@@ -4,7 +4,7 @@ on:
   push:
     # Publish `master` as Docker `latest` image.
     branches:
-      - art-25-2
+      - single-dockerfile
 
     # Publish `v1.2.3` tags as releases.
     tags:
@@ -15,7 +15,7 @@ on:
     paths:
       - "python/artexplainer/**"
       - "python/storage/**"
-      - "python/artexplainer.ppc64le.Dockerfile"
+      - "python/artexplainer.Dockerfile"
       - "!.github/**"
       - "!docs/**"
       - "!**.md"
@@ -69,7 +69,7 @@ jobs:
         with:
           platforms: linux/ppc64le
           context: python
-          file: python/artexplainer.ppc64le.Dockerfile
+          file: python/artexplainer.Dockerfile
           push: false
           # https://github.com/docker/buildx/issues/1533
           provenance: false
@@ -130,7 +130,7 @@ jobs:
         with:
           platforms: linux/ppc64le
           context: python
-          file: python/artexplainer.ppc64le.Dockerfile
+          file: python/artexplainer.Dockerfile
           push: true
           tags: ${{ env.IMAGE_ID }}:${{ env.VERSION }}
           # https://github.com/docker/buildx/issues/1533
