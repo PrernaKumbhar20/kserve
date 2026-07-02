@@ -38,7 +38,14 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             -e '/^\s*"pyasn1>=[^,]*"$/s/"$/",/' \
             -e '/^\s*"pyasn1>=/a\    "httptools==0.6.4",' \
             -e '/^\s*"pyasn1>=/a\    "uvloop==0.21.0",' \
-            -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }\ngrpcio-tools = { index = "ppc64le-wheels" }\nnumpy = { index = "ppc64le-wheels" }\npandas = { index = "ppc64le-wheels" }\npsutil = { index = "ppc64le-wheels" }\npyyaml = { index = "ppc64le-wheels" }\nhttptools = { index = "ppc64le-wheels" }\nuvloop = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a grpcio-tools = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a numpy = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pandas = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a psutil = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pyyaml = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
             kserve/pyproject.toml && \
         cd kserve && uv lock && \
         cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
@@ -54,7 +61,8 @@ COPY kserve kserve
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         rm -f kserve/pyproject.toml kserve/uv.lock && \
         cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
-        cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock; \
+        cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock && \
+        rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock; \
     fi
 
 # Full sync with complete source tree
@@ -108,8 +116,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         rm -f artexplainer/pyproject.toml artexplainer/uv.lock && \
         cp /tmp/artexplainer_ppc64le_pyproject.toml artexplainer/pyproject.toml && \
         cp /tmp/artexplainer_ppc64le_uv.lock artexplainer/uv.lock && \
-        rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock \
-              /tmp/artexplainer_ppc64le_pyproject.toml /tmp/artexplainer_ppc64le_uv.lock; \
+        rm -f /tmp/artexplainer_ppc64le_pyproject.toml /tmp/artexplainer_ppc64le_uv.lock; \
     fi
 
 # Full sync with complete source tree
