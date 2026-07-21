@@ -60,12 +60,49 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 
 # Install kserve dependencies (metadata-first for cache)
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
+
+# On ppc64le: patch pyproject.toml to add the ppc64le package index and sources,
+# then regenerate uv.lock before syncing.
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e '/^index-strategy\s*=.*/a \\' \
+            -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
+            -e '/^index-strategy\s*=.*/a name = "ppc64le-wheels"' \
+            -e '/^index-strategy\s*=.*/a url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            -e '/^index-strategy\s*=.*/a explicit = true' \
+            -e '/^\s*"pyasn1>=[^,]*"$/s/"$/",/' \
+            -e '/^\s*"pyasn1>=/a\    "httptools==0.6.4",' \
+            -e '/^\s*"pyasn1>=/a\    "uvloop==0.21.0",' \
+            -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a grpcio-tools = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a numpy = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pandas = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a psutil = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pyyaml = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a scikit-learn = { index = "ppc64le-wheels" }' \
+            kserve/pyproject.toml && \
+        cd kserve && uv lock && \
+        cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
+        cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml; \
+    fi
+
 RUN cd kserve && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
 
 COPY kserve kserve
+
+# On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        rm -f kserve/pyproject.toml kserve/uv.lock && \
+        cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
+        cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock && \
+        rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock; \
+    fi
+
 RUN cd kserve && \
     uv sync --active --no-cache && \
     uv cache clean && \
@@ -73,7 +110,40 @@ RUN cd kserve && \
 
 # Install kserve-storage
 COPY storage storage
-RUN cd storage && uv pip install . --no-cache
+
+# On ppc64le: append ppc64le index + sources to storage/pyproject.toml,
+# regenerate uv.lock, then sync (same pattern as kserve/lgbserver).
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e '/^    "pyasn1>=[^,]*"$/s/"$/",/' \
+            -e '/^    "pyasn1>=/a\    "google-crc32c==1.8.0",' \
+            -e '/^    "pyasn1>=/a\    "pyyaml==6.0.2",' \
+            storage/pyproject.toml && \
+        printf '%s\n' \
+            '' \
+            '[tool.uv]' \
+            'index-strategy = "unsafe-best-match"' \
+            'package = true' \
+            '' \
+            '[build-system]' \
+            'requires = ["setuptools>=61.0"]' \
+            'build-backend = "setuptools.build_meta"' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'google-crc32c = { index = "ppc64le-wheels" }' \
+            'hf-xet = { index = "ppc64le-wheels" }' \
+            'pyyaml = { index = "ppc64le-wheels" }' \
+            >> storage/pyproject.toml && \
+        cd storage && uv lock && \
+        uv sync --active --no-cache; \
+    else \
+        cd storage && uv pip install . --no-cache; \
+    fi
 
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
@@ -163,8 +233,13 @@ ENV HF_HOME="/tmp/huggingface"
 # https://huggingface.co/docs/huggingface_hub/en/package_reference/environment_variables#hfhubdisabletelemetry
 ENV HF_HUB_DISABLE_TELEMETRY="1"
 
-# Use TCMalloc and jemalloc for better memory management
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4:/usr/lib/x86_64-linux-gnu/libjemalloc.so.2:${LD_PRELOAD}
+# Use TCMalloc and jemalloc for better memory management (paths are arch-specific)
+RUN ARCH="$(uname -m)" && \
+    if [ "$ARCH" = "ppc64le" ]; then \
+        echo "LD_PRELOAD=/usr/lib/powerpc64le-linux-gnu/libtcmalloc.so.4:/usr/lib/powerpc64le-linux-gnu/libjemalloc.so.2" >> /etc/environment; \
+    else \
+        echo "LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4:/usr/lib/x86_64-linux-gnu/libjemalloc.so.2" >> /etc/environment; \
+    fi
 
 USER 1000
 ENV PYTHONPATH=/huggingfaceserver
