@@ -43,6 +43,16 @@ RUN --mount=type=cache,target=/var/cache/apt \
         build-essential \
         git \
         libnuma-dev && \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
+        DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --fix-missing -y \
+            libjpeg-dev \
+            zlib1g-dev \
+            libfreetype6-dev \
+            liblcms2-dev \
+            libwebp-dev \
+            tcl-dev \
+            tk-dev; \
+    fi && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -148,13 +158,33 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
-        cd huggingfaceserver && \
+        sed -i \
+            -e 's|"pillow>=12.2.0[^"]*"|"pillow==12.2.0"|g' \
+            -e 's|"bitsandbytes>=[^"]*"|"bitsandbytes>=0.45.3 ; sys_platform == '\''never'\''"|g' \
+            huggingfaceserver/pyproject.toml && \
+        printf '%s\n' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'pillow = { index = "ppc64le-wheels" }' \
+            'torch = { index = "ppc64le-wheels" }' \
+            'torchvision = { index = "ppc64le-wheels" }' \
+            'torchaudio = { index = "ppc64le-wheels" }' \
+            >> huggingfaceserver/pyproject.toml && \
         uv pip install --no-cache-dir --index-strategy unsafe-best-match \
             --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
+            "pillow==12.2.0" \
             torch \
             torchvision \
             torchaudio && \
-        uv sync --active --no-cache && \
+        cd huggingfaceserver && \
+        uv sync --active --no-cache --index-strategy unsafe-best-match \
+            --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
+            --no-build-isolation && \
         uv cache clean && \
         rm -rf ~/.cache/uv; \
     else \
