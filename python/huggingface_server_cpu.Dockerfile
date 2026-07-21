@@ -147,14 +147,27 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
-RUN cd huggingfaceserver && \
-    uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-        torch==${TORCH_VERSION}+cpu \
-        torchvision \
-        torchaudio && \
-    uv sync --active --no-cache && \
-    uv cache clean && \
-    rm -rf ~/.cache/uv
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        cd huggingfaceserver && \
+        uv pip install --no-cache-dir --index-strategy unsafe-best-match \
+            --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
+            torch \
+            torchvision \
+            torchaudio && \
+        uv sync --active --no-cache && \
+        uv cache clean && \
+        rm -rf ~/.cache/uv; \
+    else \
+        cd huggingfaceserver && \
+        uv pip install --no-cache-dir --index-strategy unsafe-best-match \
+            --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+            torch==${TORCH_VERSION}+cpu \
+            torchvision \
+            torchaudio && \
+        uv sync --active --no-cache && \
+        uv cache clean && \
+        rm -rf ~/.cache/uv; \
+    fi
 
 COPY huggingfaceserver huggingfaceserver
 RUN cd huggingfaceserver && \
