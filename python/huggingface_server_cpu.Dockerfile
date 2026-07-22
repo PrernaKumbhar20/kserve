@@ -157,49 +157,54 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
+
+# On ppc64le: patch huggingfaceserver/pyproject.toml to exclude packages that have
+# no PyPI ppc64le wheel and cannot be built from source, then regenerate uv.lock.
+# - bitsandbytes: x86_64-only, no source dist on PyPI, not on IBM devpi.
+# - torch/torchvision/torchaudio: installed from IBM devpi above; uv.lock points them
+#   to PyPI which has no ppc64le wheel, so skip them during uv sync.
+# TODO: remove exclusions if ppc64le builds become available on PyPI.
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
-            -e 's|"pillow>=12.2.0[^"]*"|"pillow==12.2.0"|g' \
-            -e 's|"bitsandbytes>=[^"]*"|"bitsandbytes>=0.45.3 ; sys_platform == '\''never'\''"|g' \
+            -e 's|"bitsandbytes>=0\.45\.3"|"bitsandbytes>=0.45.3; sys_platform == '\''linux'\'' and platform_machine != '\''ppc64le'\''"|' \
             huggingfaceserver/pyproject.toml && \
-        printf '%s\n' \
-            '' \
-            '[[tool.uv.index]]' \
-            'name = "ppc64le-wheels"' \
-            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
-            'explicit = true' \
-            '' \
-            '[tool.uv.sources]' \
-            'pillow = { index = "ppc64le-wheels" }' \
-            'torch = { index = "ppc64le-wheels" }' \
-            'torchvision = { index = "ppc64le-wheels" }' \
-            'torchaudio = { index = "ppc64le-wheels" }' \
-            >> huggingfaceserver/pyproject.toml && \
+        cd huggingfaceserver && uv lock && \
+        cp uv.lock /tmp/hfs_ppc64le_uv.lock && \
+        cp pyproject.toml /tmp/hfs_ppc64le_pyproject.toml; \
+    fi
+
+RUN cd huggingfaceserver && \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
         uv pip install --no-cache-dir --index-strategy unsafe-best-match \
             --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
-            "pillow==12.2.0" \
-            torch \
+            torch==${TORCH_VERSION} \
             torchvision \
-            torchaudio && \
-        cd huggingfaceserver && \
-        uv sync --active --no-cache --index-strategy unsafe-best-match \
-            --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
-            --no-build-isolation && \
-        uv cache clean && \
-        rm -rf ~/.cache/uv; \
+            torchaudio \
+            pillow && \
+        uv sync --active --no-cache \
+            --no-install-package torch \
+            --no-install-package torchvision \
+            --no-install-package torchaudio; \
     else \
-        cd huggingfaceserver && \
-        uv pip install --no-cache-dir --index-strategy unsafe-best-match \
-            --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+        uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
             torch==${TORCH_VERSION}+cpu \
             torchvision \
             torchaudio && \
-        uv sync --active --no-cache && \
-        uv cache clean && \
-        rm -rf ~/.cache/uv; \
-    fi
+        uv sync --active --no-cache; \
+    fi && \
+    uv cache clean && \
+    rm -rf ~/.cache/uv
 
 COPY huggingfaceserver huggingfaceserver
+
+# On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        rm -f huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock && \
+        cp /tmp/hfs_ppc64le_pyproject.toml huggingfaceserver/pyproject.toml && \
+        cp /tmp/hfs_ppc64le_uv.lock huggingfaceserver/uv.lock && \
+        rm -f /tmp/hfs_ppc64le_pyproject.toml /tmp/hfs_ppc64le_uv.lock; \
+    fi
+
 RUN cd huggingfaceserver && \
     uv sync --active --no-cache && \
     uv cache clean && \
@@ -234,10 +239,19 @@ RUN cd vllm && \
 # Ensure CPU-only torch, torchvision, and torchaudio are installed.
 # Previous uv sync / pip install steps may have pulled CUDA wheels from PyPI;
 # this final reinstall from the CPU index guarantees CPU-only builds.
-RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
-    torch==${TORCH_VERSION}+cpu \
-    torchvision \
-    torchaudio
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        uv pip install --no-cache-dir --index-strategy unsafe-best-match --reinstall \
+            --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
+            torch==${TORCH_VERSION} \
+            torchvision \
+            torchaudio \
+            pillow; \
+    else \
+        uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
+            torch==${TORCH_VERSION}+cpu \
+            torchvision \
+            torchaudio; \
+    fi
 
 # Cleanup vllm source code and caches
 RUN rm -rf /vllm /root/.cache/uv /root/.cache/pip /tmp/*
