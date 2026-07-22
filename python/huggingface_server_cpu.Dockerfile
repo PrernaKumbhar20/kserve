@@ -158,16 +158,25 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
 
-# On ppc64le: patch huggingfaceserver/pyproject.toml to exclude packages that have
-# no PyPI ppc64le wheel and cannot be built from source, then regenerate uv.lock.
-# - bitsandbytes: x86_64-only, no source dist on PyPI, not on IBM devpi.
-# - torch/torchvision/torchaudio: installed from IBM devpi above; uv.lock points them
-#   to PyPI which has no ppc64le wheel, so skip them during uv sync.
-# TODO: remove exclusions if ppc64le builds become available on PyPI.
+# On ppc64le: patch huggingfaceserver/pyproject.toml to:
+# - exclude bitsandbytes (x86_64-only, no source dist on PyPI, not on IBM devpi)
+# - route opencv-python-headless to IBM devpi (no PyPI ppc64le wheel, available on devpi)
+# - add the IBM ppc64le index so uv.sources can reference it
+# Uses Python to safely manipulate TOML structure (avoids sed corrupting nested tables).
+# TODO: remove exclusions/overrides if ppc64le builds become available on PyPI.
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
-        sed -i \
-            -e 's|"bitsandbytes>=0\.45\.3"|"bitsandbytes>=0.45.3; sys_platform == '\''linux'\'' and platform_machine != '\''ppc64le'\''"|' \
-            huggingfaceserver/pyproject.toml && \
+        printf '%s\n' \
+            'import re, pathlib' \
+            'p = pathlib.Path("huggingfaceserver/pyproject.toml")' \
+            'txt = p.read_text()' \
+            'txt = txt.replace("\"bitsandbytes>=0.45.3\"", "\"bitsandbytes>=0.45.3; sys_platform == '\''linux'\'' and platform_machine != '\''ppc64le'\''\"")' \
+            'addition = "\n[[tool.uv.index]]\nname = \"ppc64le-wheels\"\nurl = \"https://wheels.developerfirst.ibm.com/ppc64le/linux\"\nexplicit = true\n\n[tool.uv.sources]\nopencv-python-headless = { index = \"ppc64le-wheels\" }\n"' \
+            'txt = txt + addition' \
+            'if "index-strategy" not in txt:' \
+            '    txt = re.sub(r"(\[tool\.uv\])", r"\1\nindex-strategy = \"unsafe-best-match\"", txt)' \
+            'p.write_text(txt)' \
+            > /tmp/patch_hfs_pyproject.py && \
+        python3 /tmp/patch_hfs_pyproject.py && \
         cd huggingfaceserver && uv lock && \
         cp uv.lock /tmp/hfs_ppc64le_uv.lock && \
         cp pyproject.toml /tmp/hfs_ppc64le_pyproject.toml; \
