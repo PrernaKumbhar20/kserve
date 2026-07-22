@@ -184,7 +184,39 @@ RUN cd huggingfaceserver && \
         uv sync --active --no-cache \
             --no-install-package torch \
             --no-install-package torchvision \
-            --no-install-package torchaudio; \
+            --no-install-package torchaudio \
+            --no-install-package cuda-bindings \
+            --no-install-package cuda-pathfinder \
+            --no-install-package cuda-python \
+            --no-install-package cuda-tile \
+            --no-install-package cuda-toolkit \
+            --no-install-package nvidia-cublas \
+            --no-install-package nvidia-cuda-cccl \
+            --no-install-package nvidia-cuda-crt \
+            --no-install-package nvidia-cuda-cupti \
+            --no-install-package nvidia-cuda-nvcc \
+            --no-install-package nvidia-cuda-nvrtc \
+            --no-install-package nvidia-cuda-runtime \
+            --no-install-package nvidia-cuda-tileiras \
+            --no-install-package nvidia-cudnn-cu13 \
+            --no-install-package nvidia-cudnn-frontend \
+            --no-install-package nvidia-cufft \
+            --no-install-package nvidia-cufile \
+            --no-install-package nvidia-curand \
+            --no-install-package nvidia-cusolver \
+            --no-install-package nvidia-cusparse \
+            --no-install-package nvidia-cusparselt-cu13 \
+            --no-install-package nvidia-cutlass-dsl \
+            --no-install-package nvidia-cutlass-dsl-libs-base \
+            --no-install-package nvidia-cutlass-dsl-libs-cu13 \
+            --no-install-package nvidia-ml-py \
+            --no-install-package nvidia-nccl-cu13 \
+            --no-install-package nvidia-nvjitlink \
+            --no-install-package nvidia-nvshmem-cu13 \
+            --no-install-package nvidia-nvtx \
+            --no-install-package nvidia-nvvm \
+            --no-install-package tokenspeed-triton \
+            --no-install-package triton; \
     else \
         uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
             torch==${TORCH_VERSION}+cpu \
