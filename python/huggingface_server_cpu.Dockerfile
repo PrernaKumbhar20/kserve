@@ -43,16 +43,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
         build-essential \
         git \
         libnuma-dev && \
-    if [ "$(uname -m)" = "ppc64le" ]; then \
-        DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --fix-missing -y \
-            libjpeg-dev \
-            zlib1g-dev \
-            libfreetype6-dev \
-            liblcms2-dev \
-            libwebp-dev \
-            tcl-dev \
-            tk-dev; \
-    fi && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -157,95 +147,16 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
-
-# On ppc64le: patch huggingfaceserver/pyproject.toml to:
-# - exclude bitsandbytes (x86_64-only, no source dist on PyPI, not on IBM devpi)
-# - route opencv-python-headless to IBM devpi (no PyPI ppc64le wheel, available on devpi)
-# - add the IBM ppc64le index so uv.sources can reference it
-# Uses Python to safely manipulate TOML structure (avoids sed corrupting nested tables).
-# TODO: remove exclusions/overrides if ppc64le builds become available on PyPI.
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
-        printf '%s\n' \
-            'import re, pathlib' \
-            'p = pathlib.Path("huggingfaceserver/pyproject.toml")' \
-            'txt = p.read_text()' \
-            'txt = txt.replace("\"bitsandbytes>=0.45.3\"", "\"bitsandbytes>=0.45.3; sys_platform == '\''linux'\'' and platform_machine != '\''ppc64le'\''\"")' \
-            'addition = "\n[[tool.uv.index]]\nname = \"ppc64le-wheels\"\nurl = \"https://wheels.developerfirst.ibm.com/ppc64le/linux\"\nexplicit = true\n\n[tool.uv.sources]\nopencv-python-headless = { index = \"ppc64le-wheels\" }\n"' \
-            'txt = txt + addition' \
-            'if "index-strategy" not in txt:' \
-            '    txt = re.sub(r"(\[tool\.uv\])", r"\1\nindex-strategy = \"unsafe-best-match\"", txt)' \
-            'p.write_text(txt)' \
-            > /tmp/patch_hfs_pyproject.py && \
-        python3 /tmp/patch_hfs_pyproject.py && \
-        cd huggingfaceserver && uv lock && \
-        cp uv.lock /tmp/hfs_ppc64le_uv.lock && \
-        cp pyproject.toml /tmp/hfs_ppc64le_pyproject.toml; \
-    fi
-
 RUN cd huggingfaceserver && \
-    if [ "$(uname -m)" = "ppc64le" ]; then \
-        uv pip install --no-cache-dir --index-strategy unsafe-best-match \
-            --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
-            torch==${TORCH_VERSION} \
-            torchvision \
-            torchaudio \
-            pillow && \
-        uv sync --active --no-cache \
-            --no-install-package torch \
-            --no-install-package torchvision \
-            --no-install-package torchaudio \
-            --no-install-package cuda-bindings \
-            --no-install-package cuda-pathfinder \
-            --no-install-package cuda-python \
-            --no-install-package cuda-tile \
-            --no-install-package cuda-toolkit \
-            --no-install-package nvidia-cublas \
-            --no-install-package nvidia-cuda-cccl \
-            --no-install-package nvidia-cuda-crt \
-            --no-install-package nvidia-cuda-cupti \
-            --no-install-package nvidia-cuda-nvcc \
-            --no-install-package nvidia-cuda-nvrtc \
-            --no-install-package nvidia-cuda-runtime \
-            --no-install-package nvidia-cuda-tileiras \
-            --no-install-package nvidia-cudnn-cu13 \
-            --no-install-package nvidia-cudnn-frontend \
-            --no-install-package nvidia-cufft \
-            --no-install-package nvidia-cufile \
-            --no-install-package nvidia-curand \
-            --no-install-package nvidia-cusolver \
-            --no-install-package nvidia-cusparse \
-            --no-install-package nvidia-cusparselt-cu13 \
-            --no-install-package nvidia-cutlass-dsl \
-            --no-install-package nvidia-cutlass-dsl-libs-base \
-            --no-install-package nvidia-cutlass-dsl-libs-cu13 \
-            --no-install-package nvidia-ml-py \
-            --no-install-package nvidia-nccl-cu13 \
-            --no-install-package nvidia-nvjitlink \
-            --no-install-package nvidia-nvshmem-cu13 \
-            --no-install-package nvidia-nvtx \
-            --no-install-package nvidia-nvvm \
-            --no-install-package tokenspeed-triton \
-            --no-install-package triton; \
-    else \
-        uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-            torch==${TORCH_VERSION}+cpu \
-            torchvision \
-            torchaudio && \
-        uv sync --active --no-cache; \
-    fi && \
+    uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+        torch==${TORCH_VERSION}+cpu \
+        torchvision \
+        torchaudio && \
+    uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
 
 COPY huggingfaceserver huggingfaceserver
-
-# On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
-        rm -f huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock && \
-        cp /tmp/hfs_ppc64le_pyproject.toml huggingfaceserver/pyproject.toml && \
-        cp /tmp/hfs_ppc64le_uv.lock huggingfaceserver/uv.lock && \
-        rm -f /tmp/hfs_ppc64le_pyproject.toml /tmp/hfs_ppc64le_uv.lock; \
-    fi
-
 RUN cd huggingfaceserver && \
     uv sync --active --no-cache && \
     uv cache clean && \
@@ -280,19 +191,10 @@ RUN cd vllm && \
 # Ensure CPU-only torch, torchvision, and torchaudio are installed.
 # Previous uv sync / pip install steps may have pulled CUDA wheels from PyPI;
 # this final reinstall from the CPU index guarantees CPU-only builds.
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
-        uv pip install --no-cache-dir --index-strategy unsafe-best-match --reinstall \
-            --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
-            torch==${TORCH_VERSION} \
-            torchvision \
-            torchaudio \
-            pillow; \
-    else \
-        uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
-            torch==${TORCH_VERSION}+cpu \
-            torchvision \
-            torchaudio; \
-    fi
+RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
+    torch==${TORCH_VERSION}+cpu \
+    torchvision \
+    torchaudio
 
 # Cleanup vllm source code and caches
 RUN rm -rf /vllm /root/.cache/uv /root/.cache/pip /tmp/*
