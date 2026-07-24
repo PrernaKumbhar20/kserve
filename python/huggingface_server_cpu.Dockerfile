@@ -42,6 +42,11 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
         git \
+        libjpeg-dev \
+        libpng-dev \
+        libtiff-dev \
+        libfreetype6-dev \
+        zlib1g-dev \
         libnuma-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
