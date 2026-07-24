@@ -42,6 +42,11 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
         git \
+        libjpeg-dev \
+        libpng-dev \
+        libtiff-dev \
+        libfreetype6-dev \
+        zlib1g-dev \
         libnuma-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -148,19 +153,12 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
 
-# On ppc64le: patch pyproject.toml to add the ppc64le index and route pillow
-# through it (no pre-built ppc64le wheel on PyPI), then regenerate uv.lock.
+# On ppc64le: exclude bitsandbytes (x86_64-only GPU quantization library —
+# no ppc64le wheel and no sdist), then regenerate uv.lock.
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
-        printf '%s\n' \
-            '' \
-            '[[tool.uv.index]]' \
-            'name = "ppc64le-wheels"' \
-            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
-            'explicit = true' \
-            '' \
-            '[tool.uv.sources]' \
-            'pillow = { index = "ppc64le-wheels" }' \
-            >> huggingfaceserver/pyproject.toml && \
+        sed -i \
+            -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+            huggingfaceserver/pyproject.toml && \
         cd huggingfaceserver && uv lock && \
         cp uv.lock /tmp/huggingfaceserver_ppc64le_uv.lock && \
         cp pyproject.toml /tmp/huggingfaceserver_ppc64le_pyproject.toml; \
