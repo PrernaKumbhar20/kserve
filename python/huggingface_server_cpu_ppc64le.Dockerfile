@@ -1,3 +1,12 @@
+# Dedicated Dockerfile for ppc64le (IBM Power) CPU builds.
+#
+# Key differences from huggingface_server_cpu.Dockerfile:
+#   - No CUDA libraries (ppc64le has no NVIDIA CUDA support)
+#   - All packages without ppc64le PyPI wheels sourced from IBM devpi index
+#   - bitsandbytes excluded (x86_64-only GPU quantization library)
+#   - pillow build headers included (no pre-built ppc64le wheel on PyPI)
+#   - All ppc64le patches applied unconditionally (no arch guard needed)
+
 ARG BASE_IMAGE=ubuntu:22.04
 ARG VENV_PATH=/prod_venv
 
@@ -36,12 +45,19 @@ FROM base AS builder
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     ln -s /root/.local/bin/uv /usr/local/bin/uv
 
-# Install build dependencies
+# Install build dependencies.
+# libjpeg-dev, libpng-dev, libtiff-dev, libfreetype6-dev, zlib1g-dev are
+# required to compile pillow from source (no pre-built ppc64le wheel on PyPI).
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
         git \
+        libjpeg-dev \
+        libpng-dev \
+        libtiff-dev \
+        libfreetype6-dev \
+        zlib1g-dev \
         libnuma-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -52,47 +68,131 @@ ENV VIRTUAL_ENV=${VENV_PATH}
 RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-ARG TORCH_EXTRA_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux "
-ARG TORCH_VERSION=2.11.0
+ARG PPC64LE_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux"
 
-# Copy storage metadata for editable dependency resolution
+# ---------------------------------------------------------------------------
+# Install kserve
+# ---------------------------------------------------------------------------
 COPY storage/pyproject.toml storage/uv.lock storage/
-
-# Install kserve dependencies (metadata-first for cache)
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
+
+# Patch kserve/pyproject.toml: add IBM ppc64le index and route packages that
+# have no PyPI ppc64le wheels through it, then regenerate uv.lock.
+RUN sed -i \
+        -e '/^index-strategy\s*=.*/a \\' \
+        -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
+        -e '/^index-strategy\s*=.*/a name = "ppc64le-wheels"' \
+        -e '/^index-strategy\s*=.*/a url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        -e '/^index-strategy\s*=.*/a explicit = true' \
+        -e '/^\s*"pyasn1>=[^,]*"$/s/"$/",/' \
+        -e '/^\s*"pyasn1>=/a\    "httptools==0.6.4",' \
+        -e '/^\s*"pyasn1>=/a\    "uvloop==0.21.0",' \
+        -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a grpcio-tools = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a numpy = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a pandas = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a psutil = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a pyyaml = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a scikit-learn = { index = "ppc64le-wheels" }' \
+        kserve/pyproject.toml && \
+    cd kserve && uv lock
+
 RUN cd kserve && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
 
 COPY kserve kserve
+
 RUN cd kserve && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
 
+# ---------------------------------------------------------------------------
 # Install kserve-storage
+# ---------------------------------------------------------------------------
 COPY storage storage
-RUN cd storage && uv pip install . --no-cache
 
-# Install huggingfaceserver dependencies (metadata-first for cache)
+RUN sed -i \
+        -e '/^    "pyasn1>=[^,]*"$/s/"$/",/' \
+        -e '/^    "pyasn1>=/a\    "google-crc32c==1.8.0",' \
+        -e '/^    "pyasn1>=/a\    "pyyaml==6.0.2",' \
+        storage/pyproject.toml && \
+    printf '%s\n' \
+        '' \
+        '[tool.uv]' \
+        'index-strategy = "unsafe-best-match"' \
+        'package = true' \
+        '' \
+        '[build-system]' \
+        'requires = ["setuptools>=61.0"]' \
+        'build-backend = "setuptools.build_meta"' \
+        '' \
+        '[[tool.uv.index]]' \
+        'name = "ppc64le-wheels"' \
+        'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        'explicit = true' \
+        '' \
+        '[tool.uv.sources]' \
+        'google-crc32c = { index = "ppc64le-wheels" }' \
+        'hf-xet = { index = "ppc64le-wheels" }' \
+        'pyyaml = { index = "ppc64le-wheels" }' \
+        >> storage/pyproject.toml && \
+    cd storage && uv lock && \
+    uv sync --active --no-cache && \
+    uv cache clean && \
+    rm -rf ~/.cache/uv
+
+# ---------------------------------------------------------------------------
+# Install huggingfaceserver
+# ---------------------------------------------------------------------------
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
-RUN cd huggingfaceserver && \
-    uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-        torch==${TORCH_VERSION} \
-        torchvision \
-        torchaudio && \
+
+# Patch huggingfaceserver/pyproject.toml:
+#   1. Exclude bitsandbytes — x86_64-only GPU quantization library,
+#      no ppc64le wheel and no sdist available on PyPI.
+#   2. Add IBM ppc64le index and route torch/torchvision/torchaudio through it
+#      so uv lock + uv sync resolve the ppc64le builds, not PyPI torch==2.11.0.
+# Note: pyproject.toml has no existing [tool.uv.sources], so appending is valid TOML.
+RUN sed -i \
+        -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+        huggingfaceserver/pyproject.toml && \
+    printf '%s\n' \
+        '' \
+        '[[tool.uv.index]]' \
+        'name = "ppc64le-wheels"' \
+        'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        'explicit = true' \
+        '' \
+        '[tool.uv.sources]' \
+        'torch = { index = "ppc64le-wheels" }' \
+        'torchvision = { index = "ppc64le-wheels" }' \
+        'torchaudio = { index = "ppc64le-wheels" }' \
+        >> huggingfaceserver/pyproject.toml && \
+    cd huggingfaceserver && uv lock
+
+# Pre-install torch from IBM index before uv sync to cache the large download.
+RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
+        --extra-index-url ${PPC64LE_INDEX_URL} \
+        torch torchvision torchaudio && \
+    cd huggingfaceserver && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
 
 COPY huggingfaceserver huggingfaceserver
+
 RUN cd huggingfaceserver && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
 
-# install vllm
+# ---------------------------------------------------------------------------
+# Install vLLM (CPU)
+# ---------------------------------------------------------------------------
 ARG VLLM_VERSION=0.24.0
 ARG VLLM_CPU_DISABLE_AVX512=true
 ENV VLLM_CPU_DISABLE_AVX512=${VLLM_CPU_DISABLE_AVX512}
@@ -100,31 +200,20 @@ ARG VLLM_CPU_AVX512BF16=1
 ENV VLLM_CPU_AVX512BF16=${VLLM_CPU_AVX512BF16}
 ARG VLLM_TARGET_DEVICE=cpu
 ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
-# Clone vLLM repo
+
 RUN git clone --single-branch --branch v${VLLM_VERSION} https://github.com/vllm-project/vllm.git
 
-# Install vLLM build requirements
 RUN cd vllm && \
     uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/build/cpu.txt && \
     uv cache clean
 
-# Install vLLM cpu requirements
 RUN cd vllm && \
     uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/cpu.txt && \
     uv cache clean
 
-# Build and install vLLM
 RUN cd vllm && \
     VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} uv pip install --no-cache --no-build-isolation --index-strategy unsafe-best-match . && \
     uv cache clean
-
-# Ensure CPU-only torch, torchvision, and torchaudio are installed.
-# Previous uv sync / pip install steps may have pulled CUDA wheels from PyPI;
-# this final reinstall from the CPU index guarantees CPU-only builds.
-RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
-    torch==${TORCH_VERSION}+cpu \
-    torchvision \
-    torchaudio
 
 # Cleanup vllm source code and caches
 RUN rm -rf /vllm /root/.cache/uv /root/.cache/pip /tmp/*
@@ -138,12 +227,13 @@ COPY third_party/pip-licenses.py pip-licenses.py
 RUN pip install --no-cache-dir tomli
 RUN mkdir -p third_party/library && python3 pip-licenses.py
 
-# Build the final image
+# ---------------------------------------------------------------------------
+# Final image
+# ---------------------------------------------------------------------------
 FROM base AS prod
 
 RUN echo 'ulimit -c 0' >> ~/.bashrc
 
-# Activate virtual env
 ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
@@ -158,13 +248,14 @@ COPY --from=builder --chown=kserve:kserve storage storage
 
 RUN df -hT
 
-# Set a writable Hugging Face home folder to avoid permission issue. See https://github.com/kserve/kserve/issues/3562
+# Set a writable Hugging Face home folder to avoid permission issue.
+# See https://github.com/kserve/kserve/issues/3562
 ENV HF_HOME="/tmp/huggingface"
 # https://huggingface.co/docs/huggingface_hub/en/package_reference/environment_variables#hfhubdisabletelemetry
 ENV HF_HUB_DISABLE_TELEMETRY="1"
 
-# Use TCMalloc and jemalloc for better memory management
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc.so.4:/usr/lib/x86_64-linux-gnu/libjemalloc.so.2:${LD_PRELOAD}
+# ppc64le-specific TCMalloc and jemalloc paths
+ENV LD_PRELOAD=/usr/lib/powerpc64le-linux-gnu/libtcmalloc.so.4:/usr/lib/powerpc64le-linux-gnu/libjemalloc.so.2
 
 USER 1000
 ENV PYTHONPATH=/huggingfaceserver
