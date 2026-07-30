@@ -97,7 +97,9 @@ RUN sed -i \
         -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
         -e '/^kserve-storage\s*=.*/a scikit-learn = { index = "ppc64le-wheels" }' \
         kserve/pyproject.toml && \
-    cd kserve && uv lock
+    cd kserve && uv lock && \
+    cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
+    cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml
 
 RUN cd kserve && \
     uv sync --active --no-cache && \
@@ -105,6 +107,13 @@ RUN cd kserve && \
     rm -rf ~/.cache/uv
 
 COPY kserve kserve
+
+# Restore the patched pyproject.toml + uv.lock after COPY overwrites them,
+# so the second uv sync also resolves from IBM index (not PyPI).
+RUN rm -f kserve/pyproject.toml kserve/uv.lock && \
+    cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
+    cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock && \
+    rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock
 
 RUN cd kserve && \
     uv sync --active --no-cache && \
