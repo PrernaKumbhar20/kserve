@@ -163,9 +163,11 @@ COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserve
 # Patch huggingfaceserver/pyproject.toml:
 #   1. Exclude bitsandbytes — x86_64-only GPU quantization library,
 #      no ppc64le wheel and no sdist available on PyPI.
-#   2. Add IBM ppc64le index and route torch/torchvision/torchaudio through it
-#      so uv lock + uv sync resolve the ppc64le builds, not PyPI torch==2.11.0.
-# Note: pyproject.toml has no existing [tool.uv.sources], so appending is valid TOML.
+#   2. Append IBM ppc64le index + torch/torchvision/torchaudio sources so that
+#      uv lock resolves ppc64le torch from IBM index, not PyPI torch==2.11.0.
+#      NOTE: pyproject.toml already has [tool.uv] so we append [[tool.uv.index]]
+#      and [tool.uv.sources] as separate TOML tables after it — valid in TOML.
+#      Save patched files to /tmp/ so the COPY below does not overwrite them.
 RUN sed -i \
         -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
         huggingfaceserver/pyproject.toml && \
@@ -181,7 +183,9 @@ RUN sed -i \
         'torchvision = { index = "ppc64le-wheels" }' \
         'torchaudio = { index = "ppc64le-wheels" }' \
         >> huggingfaceserver/pyproject.toml && \
-    cd huggingfaceserver && uv lock
+    cd huggingfaceserver && uv lock && \
+    cp uv.lock /tmp/huggingfaceserver_ppc64le_uv.lock && \
+    cp pyproject.toml /tmp/huggingfaceserver_ppc64le_pyproject.toml
 
 # Pre-install torch from IBM index before uv sync to cache the large download.
 RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
@@ -193,6 +197,13 @@ RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
     rm -rf ~/.cache/uv
 
 COPY huggingfaceserver huggingfaceserver
+
+# Restore the patched pyproject.toml + uv.lock after COPY overwrites them,
+# so the second uv sync resolves torch from IBM index, not PyPI torch==2.11.0.
+RUN rm -f huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock && \
+    cp /tmp/huggingfaceserver_ppc64le_pyproject.toml huggingfaceserver/pyproject.toml && \
+    cp /tmp/huggingfaceserver_ppc64le_uv.lock huggingfaceserver/uv.lock && \
+    rm -f /tmp/huggingfaceserver_ppc64le_pyproject.toml /tmp/huggingfaceserver_ppc64le_uv.lock
 
 RUN cd huggingfaceserver && \
     uv sync --active --no-cache && \
