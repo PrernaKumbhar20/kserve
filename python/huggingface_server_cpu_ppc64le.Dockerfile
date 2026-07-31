@@ -160,54 +160,66 @@ RUN sed -i \
 # ---------------------------------------------------------------------------
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
 
-# Patch huggingfaceserver/pyproject.toml:
-#   1. Exclude bitsandbytes — x86_64-only GPU quantization library,
-#      no ppc64le wheel and no sdist available on PyPI.
-#   2. Insert IBM ppc64le index + torch/torchvision/torchaudio sources using sed
-#      directly after the [tool.uv] line inside the existing block.
-#   3. Delete uv.lock before regenerating — uv lock with an existing lockfile
-#      only updates changed packages; deleting forces a full fresh resolution
-#      so torch is resolved from IBM index instead of the PyPI-pinned lockfile.
-#      Save patched files to /tmp/ so the COPY below does not overwrite them.
-RUN sed -i \
-        -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
-        -e '/^\[tool\.uv\]$/a index = [{name = "ppc64le-wheels", url = "https://wheels.developerfirst.ibm.com/ppc64le/linux", explicit = true}]' \
-        huggingfaceserver/pyproject.toml && \
-    printf '%s\n' \
-        '' \
-        '[tool.uv.sources]' \
-        'torch = { index = "ppc64le-wheels" }' \
-        'torchvision = { index = "ppc64le-wheels" }' \
-        'torchaudio = { index = "ppc64le-wheels" }' \
-        >> huggingfaceserver/pyproject.toml && \
-    rm -f huggingfaceserver/uv.lock && \
-    cd huggingfaceserver && uv lock && \
-    cp uv.lock /tmp/huggingfaceserver_ppc64le_uv.lock && \
-    cp pyproject.toml /tmp/huggingfaceserver_ppc64le_pyproject.toml
+# On ppc64le: patch pyproject.toml to:
+#   1. exclude bitsandbytes (x86_64-only, no ppc64le wheel or sdist)
+#   2. add IBM ppc64le index and route torch/torchvision/torchaudio through it
+#      so uv sync resolves ppc64le torch from IBM index, not PyPI
+# Then regenerate uv.lock before syncing.
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+            huggingfaceserver/pyproject.toml && \
+        printf '%s\n' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'torch = { index = "ppc64le-wheels" }' \
+            'torchvision = { index = "ppc64le-wheels" }' \
+            'torchaudio = { index = "ppc64le-wheels" }' \
+            >> huggingfaceserver/pyproject.toml && \
+        cd huggingfaceserver && uv lock && \
+        cp uv.lock /tmp/huggingfaceserver_ppc64le_uv.lock && \
+        cp pyproject.toml /tmp/huggingfaceserver_ppc64le_pyproject.toml; \
+    fi
 
-# Pre-install torch from IBM index before uv sync to cache the large download.
-RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
-        --extra-index-url ${PPC64LE_INDEX_URL} \
-        torch torchvision torchaudio && \
-    cd huggingfaceserver && \
-    uv sync --active --no-cache && \
-    uv cache clean && \
-    rm -rf ~/.cache/uv
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        cd huggingfaceserver && \
+        uv pip install --no-cache-dir --index-strategy unsafe-best-match \
+            --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux \
+            torch torchvision torchaudio && \
+        uv sync --active --no-cache && \
+        uv cache clean && \
+        rm -rf ~/.cache/uv; \
+    else \
+        cd huggingfaceserver && \
+        uv pip install --no-cache-dir --index-strategy unsafe-best-match \
+            --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+            torch==${TORCH_VERSION}+cpu torchvision torchaudio && \
+        uv sync --active --no-cache && \
+        uv cache clean && \
+        rm -rf ~/.cache/uv; \
+    fi
 
 COPY huggingfaceserver huggingfaceserver
 
-# Restore the patched pyproject.toml + uv.lock after COPY overwrites them,
-# so the second uv sync resolves torch from IBM index, not PyPI torch==2.11.0.
-RUN rm -f huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock && \
-    cp /tmp/huggingfaceserver_ppc64le_pyproject.toml huggingfaceserver/pyproject.toml && \
-    cp /tmp/huggingfaceserver_ppc64le_uv.lock huggingfaceserver/uv.lock && \
-    rm -f /tmp/huggingfaceserver_ppc64le_pyproject.toml /tmp/huggingfaceserver_ppc64le_uv.lock
+
+
+# On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        rm -f huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock && \
+        cp /tmp/huggingfaceserver_ppc64le_pyproject.toml huggingfaceserver/pyproject.toml && \
+        cp /tmp/huggingfaceserver_ppc64le_uv.lock huggingfaceserver/uv.lock && \
+        rm -f /tmp/huggingfaceserver_ppc64le_pyproject.toml /tmp/huggingfaceserver_ppc64le_uv.lock; \
+    fi
 
 RUN cd huggingfaceserver && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
-
 # ---------------------------------------------------------------------------
 # Install vLLM (CPU)
 # ---------------------------------------------------------------------------
