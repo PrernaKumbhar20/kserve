@@ -164,7 +164,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             'torchvision = { index = "ppc64le-wheels" }' \
             'torchaudio = { index = "ppc64le-wheels" }' \
             >> huggingfaceserver/pyproject.toml && \
-        rm -f huggingfaceserver/uv.lock; \
+        cd huggingfaceserver && uv lock; \
     fi
 
 RUN cd huggingfaceserver && \
