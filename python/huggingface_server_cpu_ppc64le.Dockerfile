@@ -163,10 +163,11 @@ COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserve
 # Patch huggingfaceserver/pyproject.toml:
 #   1. Exclude bitsandbytes — x86_64-only GPU quantization library,
 #      no ppc64le wheel and no sdist available on PyPI.
-#   2. Insert IBM ppc64le index + torch/torchvision/torchaudio sources directly
-#      after the existing [tool.uv] line so uv lock picks them up correctly.
-#      Appending [tool.uv.sources] at end-of-file is ignored by uv when a
-#      [tool.uv] block already exists — sed insert avoids that problem.
+#   2. Insert IBM ppc64le index + torch/torchvision/torchaudio sources using sed
+#      directly after the [tool.uv] line inside the existing block.
+#   3. Delete uv.lock before regenerating — uv lock with an existing lockfile
+#      only updates changed packages; deleting forces a full fresh resolution
+#      so torch is resolved from IBM index instead of the PyPI-pinned lockfile.
 #      Save patched files to /tmp/ so the COPY below does not overwrite them.
 RUN sed -i \
         -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
@@ -179,6 +180,7 @@ RUN sed -i \
         'torchvision = { index = "ppc64le-wheels" }' \
         'torchaudio = { index = "ppc64le-wheels" }' \
         >> huggingfaceserver/pyproject.toml && \
+    rm -f huggingfaceserver/uv.lock && \
     cd huggingfaceserver && uv lock && \
     cp uv.lock /tmp/huggingfaceserver_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/huggingfaceserver_ppc64le_pyproject.toml
