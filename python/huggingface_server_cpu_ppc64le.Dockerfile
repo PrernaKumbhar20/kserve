@@ -151,7 +151,20 @@ COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserve
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
             -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
-            huggingfaceserver/pyproject.toml; \
+            huggingfaceserver/pyproject.toml && \
+        printf '%s\n' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'torch = { index = "ppc64le-wheels" }' \
+            'torchvision = { index = "ppc64le-wheels" }' \
+            'torchaudio = { index = "ppc64le-wheels" }' \
+            >> huggingfaceserver/pyproject.toml && \
+        cd huggingfaceserver && uv lock; \
     fi
 
 RUN cd huggingfaceserver && \
