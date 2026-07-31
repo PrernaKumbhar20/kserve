@@ -170,7 +170,7 @@ COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserve
 #      Save patched files to /tmp/ so the COPY below does not overwrite them.
 RUN sed -i \
         -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
-        -e '/^\[tool\.uv\]$/a indexes = [{name = "ppc64le-wheels", url = "https://wheels.developerfirst.ibm.com/ppc64le/linux", explicit = true}]' \
+        -e '/^\[tool\.uv\]$/a index = [{name = "ppc64le-wheels", url = "https://wheels.developerfirst.ibm.com/ppc64le/linux", explicit = true}]' \
         huggingfaceserver/pyproject.toml && \
     printf '%s\n' \
         '' \
