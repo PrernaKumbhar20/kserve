@@ -163,20 +163,16 @@ COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserve
 # Patch huggingfaceserver/pyproject.toml:
 #   1. Exclude bitsandbytes — x86_64-only GPU quantization library,
 #      no ppc64le wheel and no sdist available on PyPI.
-#   2. Append IBM ppc64le index + torch/torchvision/torchaudio sources so that
-#      uv lock resolves ppc64le torch from IBM index, not PyPI torch==2.11.0.
-#      NOTE: pyproject.toml already has [tool.uv] so we append [[tool.uv.index]]
-#      and [tool.uv.sources] as separate TOML tables after it — valid in TOML.
+#   2. Insert IBM ppc64le index + torch/torchvision/torchaudio sources directly
+#      after the existing [tool.uv] line so uv lock picks them up correctly.
+#      Appending [tool.uv.sources] at end-of-file is ignored by uv when a
+#      [tool.uv] block already exists — sed insert avoids that problem.
 #      Save patched files to /tmp/ so the COPY below does not overwrite them.
 RUN sed -i \
         -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+        -e '/^\[tool\.uv\]$/a indexes = [{name = "ppc64le-wheels", url = "https://wheels.developerfirst.ibm.com/ppc64le/linux", explicit = true}]' \
         huggingfaceserver/pyproject.toml && \
     printf '%s\n' \
-        '' \
-        '[[tool.uv.index]]' \
-        'name = "ppc64le-wheels"' \
-        'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
-        'explicit = true' \
         '' \
         '[tool.uv.sources]' \
         'torch = { index = "ppc64le-wheels" }' \
