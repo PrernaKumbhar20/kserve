@@ -154,8 +154,6 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             huggingfaceserver/pyproject.toml && \
         printf '%s\n' \
             '' \
-            'required-environments = ["sys_platform == '\''linux'\'' and platform_machine == '\''ppc64le'\''"]' \
-            '' \
             '[[tool.uv.index]]' \
             'name = "ppc64le-wheels"' \
             'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
