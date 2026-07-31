@@ -147,6 +147,13 @@ RUN sed -i \
 
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
+
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+            huggingfaceserver/pyproject.toml; \
+    fi
+
 RUN cd huggingfaceserver && \
     uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
         torch==${TORCH_VERSION} \
