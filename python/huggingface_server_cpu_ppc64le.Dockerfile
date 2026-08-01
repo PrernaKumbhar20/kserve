@@ -151,6 +151,7 @@ COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserve
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
             -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+            -e 's|"kserve\[llm\] @ file:///${PROJECT_ROOT}/../kserve"|"kserve @ file:///${PROJECT_ROOT}/../kserve"|' \
             huggingfaceserver/pyproject.toml && \
         printf '%s\n' \
             '' \
