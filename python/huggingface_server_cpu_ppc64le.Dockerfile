@@ -236,7 +236,12 @@ RUN cd vllm && \
 
 # Install vLLM cpu requirements
 RUN cd vllm && \
-    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/cpu.txt && \
+    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
+        --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+        llvmlite && \
+    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
+        --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+        -r requirements/cpu.txt && \
     uv cache clean
 
 # Build and install vLLM
