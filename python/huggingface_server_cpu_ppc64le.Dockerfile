@@ -167,6 +167,8 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             'torch = { index = "ppc64le-wheels" }' \
             'torchvision = { index = "ppc64le-wheels" }' \
             'torchaudio = { index = "ppc64le-wheels" }' \
+            'markupsafe = { index = "ppc64le-wheels" }' \
+            'pillow = { index = "ppc64le-wheels" }' \
             >> huggingfaceserver/pyproject.toml && \
         rm -f huggingfaceserver/uv.lock; \
     fi
@@ -177,7 +179,29 @@ RUN cd huggingfaceserver && \
     rm -rf ~/.cache/uv
 
 COPY huggingfaceserver huggingfaceserver
-RUN cd huggingfaceserver && \
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e '/^dependencies = \[$/a\    "torchaudio==2.9.1",' \
+            -e '/^dependencies = \[$/a\    "torchvision==0.27.0",' \
+            -e '/^dependencies = \[$/a\    "torch==2.11.0",' \
+            -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+            -e 's|"kserve\[llm\] @ file:///${PROJECT_ROOT}/../kserve"|"kserve @ file:///${PROJECT_ROOT}/../kserve"|' \
+            huggingfaceserver/pyproject.toml && \
+        printf '%s\n' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'torch = { index = "ppc64le-wheels" }' \
+            'torchvision = { index = "ppc64le-wheels" }' \
+            'torchaudio = { index = "ppc64le-wheels" }' \
+            >> huggingfaceserver/pyproject.toml && \
+        rm -f huggingfaceserver/uv.lock; \
+    fi && \
+    cd huggingfaceserver && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
