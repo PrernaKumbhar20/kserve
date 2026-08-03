@@ -236,12 +236,12 @@ RUN cd vllm && \
 
 # Install vLLM cpu requirements
 RUN cd vllm && \
+    sed -i 's/^numba == 0.65.0/numba == 0.64.0/' requirements/cpu.txt && \
     uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
         --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
         llvmlite==0.47.0+ppc64le1 && \
     uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
         --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-        numba==0.64.0 \
         -r requirements/cpu.txt && \
     uv cache clean
 
