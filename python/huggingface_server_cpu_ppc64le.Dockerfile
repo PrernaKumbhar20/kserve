@@ -238,9 +238,10 @@ RUN cd vllm && \
 RUN cd vllm && \
     uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
         --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-        llvmlite && \
+        llvmlite==0.47.0+ppc64le1 && \
     uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
         --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+        numba==0.64.0 \
         -r requirements/cpu.txt && \
     uv cache clean
 
