@@ -198,6 +198,8 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             'torch = { index = "ppc64le-wheels" }' \
             'torchvision = { index = "ppc64le-wheels" }' \
             'torchaudio = { index = "ppc64le-wheels" }' \
+            'markupsafe = { index = "ppc64le-wheels" }' \
+            'pillow = { index = "ppc64le-wheels" }' \
             >> huggingfaceserver/pyproject.toml && \
         rm -f huggingfaceserver/uv.lock; \
     fi && \
