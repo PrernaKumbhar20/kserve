@@ -43,7 +43,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
-        cargo \
         git \
         libfreetype6-dev \
         libjpeg-dev \
@@ -51,10 +50,12 @@ RUN --mount=type=cache,target=/var/cache/apt \
         libpng-dev \
         libtiff-dev \
         libyajl-dev \
-        rustc \
         zlib1g-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal && \
+    /root/.cargo/bin/rustup default stable
 
 # Activate virtual env
 ARG VENV_PATH
