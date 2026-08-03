@@ -43,6 +43,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
+        cmake \
         git \
         libfreetype6-dev \
         libjpeg-dev \
@@ -50,6 +51,7 @@ RUN --mount=type=cache,target=/var/cache/apt \
         libpng-dev \
         libtiff-dev \
         libyajl-dev \
+        llvm-dev \
         zlib1g-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
