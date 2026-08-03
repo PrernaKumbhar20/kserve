@@ -57,11 +57,13 @@ RUN --mount=type=cache,target=/var/cache/apt \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal && \
     /root/.cargo/bin/rustup default stable
 
+ENV PATH="/root/.cargo/bin:$PATH"
+
 # Activate virtual env
 ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
 RUN uv venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PATH="$VIRTUAL_ENV/bin:/root/.cargo/bin:$PATH"
 
 ARG TORCH_EXTRA_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux"
 ARG TORCH_VERSION=2.11.0
