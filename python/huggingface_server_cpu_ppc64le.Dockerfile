@@ -48,9 +48,11 @@ RUN --mount=type=cache,target=/var/cache/apt \
         libjpeg-dev \
         libnuma-dev \
         libpng-dev \
+        libprotobuf-dev \
         libtiff-dev \
         libyajl-dev \
         llvm-dev \
+        protobuf-compiler \
         zlib1g-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
