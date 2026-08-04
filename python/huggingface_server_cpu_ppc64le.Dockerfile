@@ -250,7 +250,7 @@ RUN cd vllm && \
 
 # Build and install vLLM
 RUN cd vllm && \
-    VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} uv pip install --no-cache --no-build-isolation --index-strategy unsafe-best-match . && \
+    VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} VLLM_CPU_X86=1 uv pip install --no-cache --no-build-isolation --index-strategy unsafe-best-match . && \
     uv cache clean
 
 # Ensure CPU-only torch, torchvision, and torchaudio are installed.
