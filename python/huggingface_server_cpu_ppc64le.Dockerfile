@@ -43,7 +43,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
-        cmake \
         git \
         libfreetype6-dev \
         libjpeg-dev \
@@ -66,6 +65,7 @@ ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
 RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:/root/.cargo/bin:$PATH"
+RUN uv pip install --no-cache-dir "cmake>=3.26" ninja
 
 ARG TORCH_EXTRA_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux"
 ARG TORCH_VERSION=2.11.0
