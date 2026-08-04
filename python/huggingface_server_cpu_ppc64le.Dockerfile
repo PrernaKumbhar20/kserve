@@ -237,6 +237,7 @@ RUN cd vllm && \
 # Install vLLM cpu requirements
 RUN cd vllm && \
     sed -i 's/^numba == 0.65.0/numba == 0.64.0/' requirements/cpu.txt && \
+    sed -i 's/^opencv-python-headless >= 4.13.0/opencv-python-headless == 4.13.0.92/' requirements/common.txt && \
     uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
         --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
         llvmlite==0.47.0+ppc64le1 && \
