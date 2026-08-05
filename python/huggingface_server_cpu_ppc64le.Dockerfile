@@ -231,7 +231,8 @@ ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
 # Preinstall sentencepiece from IBM ppc64le index so vLLM can reuse it.
 RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
     --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-    sentencepiece==0.2.1 && \
+    sentencepiece==0.2.1 \
+    opencv-python-headless && \
     uv cache clean
 
 # Install prebuilt vLLM wheel from IBM ppc64le index to avoid long source builds.
