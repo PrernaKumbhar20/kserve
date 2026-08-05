@@ -228,29 +228,10 @@ ARG VLLM_CPU_AVX512BF16=1
 ENV VLLM_CPU_AVX512BF16=${VLLM_CPU_AVX512BF16}
 ARG VLLM_TARGET_DEVICE=cpu
 ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
-# Clone vLLM repo
-RUN git clone --single-branch --branch v${VLLM_VERSION} https://github.com/vllm-project/vllm.git
-
-# Install vLLM build requirements
-RUN cd vllm && \
-    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/build/cpu.txt && \
-    uv cache clean
-
-# Install vLLM cpu requirements
-RUN cd vllm && \
-    sed -i 's/^numba == 0.65.0/numba == 0.64.0/' requirements/cpu.txt && \
-    sed -i 's/^opencv-python-headless >= 4.13.0/opencv-python-headless == 4.13.0.92/' requirements/common.txt && \
-    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
-        --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-        llvmlite==0.47.0+ppc64le1 && \
-    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match \
-        --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-        -r requirements/cpu.txt && \
-    uv cache clean
-
-# Build and install vLLM
-RUN cd vllm && \
-    VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} VLLM_CPU_X86=1 uv pip install --no-cache --no-build-isolation --index-strategy unsafe-best-match . && \
+# Install prebuilt vLLM wheel from IBM ppc64le index to avoid long source builds.
+RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
+    --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+    vllm==${VLLM_VERSION} && \
     uv cache clean
 
 # Ensure CPU-only torch, torchvision, and torchaudio are installed.
