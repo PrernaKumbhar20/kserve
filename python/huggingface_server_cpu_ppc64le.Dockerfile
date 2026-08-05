@@ -232,7 +232,12 @@ ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
 RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
     --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
     sentencepiece==0.2.1 \
-    opencv-python-headless && \
+    tiktoken==0.12.0 \
+    msgspec==0.19.0 \
+    ijson==3.5.0 \
+    llguidance==1.7.5 \
+    xgrammar==0.2.1 \
+    opencv-python-headless==4.13.0.92 && \
     uv cache clean
 
 # Install prebuilt vLLM wheel from IBM ppc64le index to avoid long source builds.
