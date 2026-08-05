@@ -250,7 +250,7 @@ RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
 # Previous uv sync / pip install steps may have pulled CUDA wheels from PyPI;
 # this final reinstall from the CPU index guarantees CPU-only builds.
 RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
-    torch==${TORCH_VERSION}+cpu \
+    torch==${TORCH_VERSION} \
     torchvision \
     torchaudio
 
