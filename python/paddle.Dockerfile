@@ -7,7 +7,11 @@ ARG VENV_PATH=/prod_venv
 FROM ${BASE_IMAGE} AS builder
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends python3-dev curl build-essential && apt-get clean && \
+RUN apt-get update && apt-get install -y --no-install-recommends curl python3-dev build-essential && \
+    if [ "$(uname -m)" = "ppc64le" ]; then apt-get install -y libtiff5-dev libjpeg-dev libopenjp2-7-dev zlib1g-dev \
+    libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk \
+    libharfbuzz-dev libfribidi-dev libxcb1-dev; fi && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Install uv and ensure it's in PATH
@@ -25,21 +29,62 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 
 # Install kserve dependencies using uv
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
-RUN cd kserve && uv sync --active --no-cache
+
+# On ppc64le: patch pyproject.toml to add the ppc64le package index and sources,
+# then regenerate uv.lock before syncing.
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e '/^index-strategy\s*=.*/a \\' \
+            -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
+            -e '/^index-strategy\s*=.*/a name = "ppc64le-wheels"' \
+            -e '/^index-strategy\s*=.*/a url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            -e '/^index-strategy\s*=.*/a explicit = true' \
+            -e '/^\s*"pyasn1>=[^,]*"$/s/"$/",/' \
+            -e '/^\s*"pyasn1>=/a\    "httptools==0.6.4",' \
+            -e '/^\s*"pyasn1>=/a\    "uvloop==0.21.0",' \
+            -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a grpcio-tools = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a numpy = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pandas = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a psutil = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pyyaml = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
+            kserve/pyproject.toml && \
+        cd kserve && uv lock && \
+        cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
+        cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml; \
+    fi
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve
-RUN cd kserve && uv sync --active --no-cache
+
+# On ppc64le: restore the patched pyproject.toml + uv.lock after COPY overwrites them
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        rm -f kserve/pyproject.toml kserve/uv.lock && \
+        cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
+        cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock && \
+        rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock; \
+    fi
+    
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd kserve && uv sync --active --no-cache
 
 # Install kserve-storage
 COPY storage storage
-RUN cd storage && uv pip install . --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd storage && uv pip install . --no-cache
 
 # Install paddleserver dependencies using uv
 COPY paddleserver/pyproject.toml paddleserver/uv.lock paddleserver/
-RUN cd paddleserver && uv sync --active --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd paddleserver && uv sync --active --no-cache
 
 COPY paddleserver paddleserver
-RUN cd paddleserver && uv sync --active --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd paddleserver && uv sync --active --no-cache
 
 # Generate third-party licenses
 COPY pyproject.toml pyproject.toml
