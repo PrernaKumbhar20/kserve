@@ -116,10 +116,38 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Install paddleserver dependencies using uv
 COPY paddleserver/pyproject.toml paddleserver/uv.lock paddleserver/
+
+# On ppc64le: paddlepaddle has no PyPI wheel; install it from the ppc64le index.
+# Patch pyproject.toml to add the index + source, regenerate uv.lock, then sync.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
+        printf '%s\n' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'paddlepaddle = { index = "ppc64le-wheels" }' \
+            >> paddleserver/pyproject.toml && \
+        cd paddleserver && uv lock && \
+        cp uv.lock /tmp/paddleserver_ppc64le_uv.lock && \
+        cp pyproject.toml /tmp/paddleserver_ppc64le_pyproject.toml; \
+    fi
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     cd paddleserver && uv sync --active --no-cache
 
 COPY paddleserver paddleserver
+
+# On ppc64le: restore patched files after COPY overwrites them
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        cp /tmp/paddleserver_ppc64le_pyproject.toml paddleserver/pyproject.toml && \
+        cp /tmp/paddleserver_ppc64le_uv.lock paddleserver/uv.lock && \
+        rm -f /tmp/paddleserver_ppc64le_pyproject.toml /tmp/paddleserver_ppc64le_uv.lock; \
+    fi
+
 RUN --mount=type=cache,target=/root/.cache/uv \
     cd paddleserver && uv sync --active --no-cache
 
