@@ -62,7 +62,8 @@ COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
 # On ppc64le: patch pyproject.toml to add the ppc64le package index and sources,
 # then regenerate uv.lock before syncing.
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
             -e '/^index-strategy\s*=.*/a \\' \
             -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
@@ -87,7 +88,8 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml; \
     fi
 
-RUN cd kserve && uv sync --active --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd kserve && uv sync --active
 
 COPY kserve kserve
 
@@ -99,14 +101,16 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock; \
     fi
 
-RUN cd kserve && uv sync --active --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd kserve && uv sync --active
 
 # Install kserve-storage
 COPY storage storage
 
 # On ppc64le: append ppc64le index + sources to storage/pyproject.toml,
 # regenerate uv.lock, then sync (same pattern as kserve/lgbserver).
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
             -e '/^    "pyasn1>=[^,]*"$/s/"$/",/' \
             -e '/^    "pyasn1>=/a\    "google-crc32c==1.7.1",' \
@@ -133,9 +137,9 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             'pyyaml = { index = "ppc64le-wheels" }' \
             >> storage/pyproject.toml && \
         cd storage && uv lock && \
-        uv sync --active --no-cache; \
+        uv sync --active; \
     else \
-        cd storage && uv pip install . --no-cache; \
+        cd storage && uv pip install .; \
     fi
 
 # Install dependencies for pmmlserver using uv
@@ -143,7 +147,8 @@ COPY pmmlserver/pyproject.toml pmmlserver/uv.lock pmmlserver/
 
 # On ppc64le: add transitive deps that need wheel pinning, append the ppc64le
 # index + sources to pmmlserver/pyproject.toml, then regenerate uv.lock.
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
             -e '/^\s*"setuptools<71\.0\.0,>=70\.0\.0",$/a\    "pyjnius==1.6.1",' \
             -e '/^\s*"setuptools<71\.0\.0,>=70\.0\.0",$/a\    "jpype1==1.5.2",' \
@@ -171,7 +176,8 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         cp pyproject.toml /tmp/pmmlserver_ppc64le_pyproject.toml; \
     fi
 
-RUN cd pmmlserver && uv sync --active --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd pmmlserver && uv sync --active
 
 COPY pmmlserver pmmlserver
 
@@ -183,13 +189,15 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         rm -f /tmp/pmmlserver_ppc64le_pyproject.toml /tmp/pmmlserver_ppc64le_uv.lock; \
     fi
 
-RUN cd pmmlserver && uv sync --active --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd pmmlserver && uv sync --active
 
 # Generate third-party licenses
 COPY pyproject.toml pyproject.toml
 COPY third_party/pip-licenses.py pip-licenses.py
 # TODO: Remove this when upgrading to python 3.11+
-RUN uv pip install --no-cache-dir tomli
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install tomli
 RUN mkdir -p third_party/library && python3 pip-licenses.py
 
 # ---------- Production image ----------
