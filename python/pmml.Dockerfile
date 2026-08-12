@@ -1,6 +1,6 @@
 ARG PYTHON_VERSION=3.12
 ARG JAVA_VERSION=21
-ARG BASE_IMAGE=eclipse-temurin:${JAVA_VERSION}-jdk-noble
+ARG BASE_IMAGE=docker.io/library/eclipse-temurin:${JAVA_VERSION}-jdk-noble
 ARG VENV_PATH=/prod_venv
 
 FROM ${BASE_IMAGE} AS builder
@@ -21,7 +21,14 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
     libopenblas-dev \
     apt-transport-https \
     gpg \
-    gcc build-essential && \
+    gcc build-essential \
+    libjpeg-dev \
+    zlib1g-dev \
+    libtiff-dev \
+    libfreetype6-dev \
+    liblcms2-dev \
+    libwebp-dev \
+    libopenjp2-7-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*; \
     else \
