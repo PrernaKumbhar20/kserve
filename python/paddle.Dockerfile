@@ -56,8 +56,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml; \
     fi
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd kserve && uv sync --active --no-cache
+RUN cd kserve && uv sync --active --no-cache
 
 COPY kserve kserve
 
@@ -69,8 +68,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock; \
     fi
     
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd kserve && uv sync --active --no-cache
+RUN cd kserve && uv sync --active --no-cache
 
 # Install kserve-storage
 COPY storage storage
@@ -78,8 +76,7 @@ COPY storage storage
 
 # On ppc64le: append ppc64le index + sources to storage/pyproject.toml,
 # regenerate uv.lock, then sync (same pattern as kserve/lgbserver).
-RUN --mount=type=cache,target=/root/.cache/uv \
-    if [ "$(uname -m)" = "ppc64le" ]; then \
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
             -e '/^    "pyasn1>=[^,]*"$/s/"$/",/' \
             -e '/^    "pyasn1>=/a\    "google-crc32c==1.8.0",' \
@@ -111,16 +108,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         cd storage && uv pip install .; \
     fi
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd storage && uv pip install . --no-cache
+RUN cd storage && uv pip install . --no-cache
 
 # Install paddleserver dependencies using uv
 COPY paddleserver/pyproject.toml paddleserver/uv.lock paddleserver/
 
 # On ppc64le: paddlepaddle has no PyPI wheel; install it from the ppc64le index.
 # Patch pyproject.toml to add the index + source, regenerate uv.lock, then sync.
-RUN --mount=type=cache,target=/root/.cache/uv \
-    if [ "$(uname -m)" = "ppc64le" ]; then \
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         printf '%s\n' \
             '' \
             '[[tool.uv.index]]' \
@@ -136,8 +131,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         cp pyproject.toml /tmp/paddleserver_ppc64le_pyproject.toml; \
     fi
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd paddleserver && uv sync --active --no-cache
+RUN cd paddleserver && uv sync --active --no-cache
 
 COPY paddleserver paddleserver
 
@@ -148,8 +142,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         rm -f /tmp/paddleserver_ppc64le_pyproject.toml /tmp/paddleserver_ppc64le_uv.lock; \
     fi
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd paddleserver && uv sync --active --no-cache
+RUN cd paddleserver && uv sync --active --no-cache
 
 # Generate third-party licenses
 COPY pyproject.toml pyproject.toml
