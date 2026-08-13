@@ -32,7 +32,8 @@ COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
 # On ppc64le: patch pyproject.toml to add the ppc64le package index and sources,
 # then regenerate uv.lock before syncing.
-RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
             -e '/^index-strategy\s*=.*/a \\' \
             -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
