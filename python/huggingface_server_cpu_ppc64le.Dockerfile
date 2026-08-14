@@ -5,7 +5,8 @@ FROM ${BASE_IMAGE} AS base
 
 ARG PYTHON=python3
 
-RUN apt-get update && \
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
     apt-get upgrade -y && \
     apt-get install --no-install-recommends --fix-missing -y \
         g++-12 \
@@ -33,7 +34,8 @@ RUN ln -sf "$(which ${PYTHON})" /usr/bin/python
 FROM base AS builder
 
 # Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    curl -LsSf https://astral.sh/uv/install.sh | sh && \
     ln -s /root/.local/bin/uv /usr/local/bin/uv
 
 # Install build dependencies
@@ -42,7 +44,14 @@ RUN --mount=type=cache,target=/var/cache/apt \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
         git \
-        libnuma-dev && \
+        libnuma-dev \
+        libjpeg-turbo8-dev \
+        zlib1g-dev \
+        libpng-dev \
+        libtiff-dev \
+        libfreetype-dev \
+        libwebp-dev \
+        libopenjp2-7-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -85,10 +94,9 @@ RUN sed -i \
     cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml
 
-RUN cd kserve && \
-    uv sync --active --no-cache && \
-    uv cache clean && \
-    rm -rf ~/.cache/uv
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd kserve && \
+    uv sync --active
 
 COPY kserve kserve
 
@@ -99,30 +107,28 @@ RUN rm -f kserve/pyproject.toml kserve/uv.lock && \
     cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock && \
     rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock
 
-RUN cd kserve && \
-    uv sync --active --no-cache && \
-    uv cache clean && \
-    rm -rf ~/.cache/uv
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd kserve && \
+    uv sync --active
 # Install kserve-storage
 COPY storage storage
-RUN cd storage && uv pip install . --no-cache
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd storage && uv pip install .
 
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
-RUN cd huggingfaceserver && \
-    uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd huggingfaceserver && \
+    uv pip install --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
         torch==${TORCH_VERSION}+cpu \
         torchvision \
         torchaudio && \
-    uv sync --active --no-cache && \
-    uv cache clean && \
-    rm -rf ~/.cache/uv
+    uv sync --active
 
 COPY huggingfaceserver huggingfaceserver
-RUN cd huggingfaceserver && \
-    uv sync --active --no-cache && \
-    uv cache clean && \
-    rm -rf ~/.cache/uv
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd huggingfaceserver && \
+    uv sync --active
 
 # install vllm
 ARG VLLM_VERSION=0.24.0
@@ -136,30 +142,31 @@ ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
 RUN git clone --single-branch --branch v${VLLM_VERSION} https://github.com/vllm-project/vllm.git
 
 # Install vLLM build requirements
-RUN cd vllm && \
-    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/build/cpu.txt && \
-    uv cache clean
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd vllm && \
+    uv pip install -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/build/cpu.txt
 
 # Install vLLM cpu requirements
-RUN cd vllm && \
-    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/cpu.txt && \
-    uv cache clean
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd vllm && \
+    uv pip install -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/cpu.txt
 
 # Build and install vLLM
-RUN cd vllm && \
-    VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} uv pip install --no-cache --no-build-isolation --index-strategy unsafe-best-match . && \
-    uv cache clean
+RUN --mount=type=cache,target=/root/.cache/uv \
+    cd vllm && \
+    VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} uv pip install --no-build-isolation --index-strategy unsafe-best-match .
 
 # Ensure CPU-only torch, torchvision, and torchaudio are installed.
 # Previous uv sync / pip install steps may have pulled CUDA wheels from PyPI;
 # this final reinstall from the CPU index guarantees CPU-only builds.
-RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
     torch==${TORCH_VERSION}+cpu \
     torchvision \
     torchaudio
 
-# Cleanup vllm source code and caches
-RUN rm -rf /vllm /root/.cache/uv /root/.cache/pip /tmp/*
+# Cleanup vllm source code
+RUN rm -rf /vllm /tmp/*
 
 RUN df -hT
 
@@ -167,7 +174,8 @@ RUN df -hT
 COPY pyproject.toml pyproject.toml
 COPY third_party/pip-licenses.py pip-licenses.py
 # TODO: Remove this when upgrading to python 3.11+
-RUN pip install --no-cache-dir tomli
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install tomli
 RUN mkdir -p third_party/library && python3 pip-licenses.py
 
 # Build the final image
