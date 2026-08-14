@@ -62,6 +62,7 @@ RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 ARG TORCH_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu"
+ARG TORCH_PPC64LE_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux"
 ARG TORCH_VERSION=2.11.0
 
 # Copy storage metadata for editable dependency resolution
@@ -144,8 +145,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
 RUN --mount=type=cache,target=/root/.cache/uv \
     cd huggingfaceserver && \
-    uv pip install --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-        torch==${TORCH_VERSION}+cpu \
+    uv pip install --index-strategy unsafe-best-match \
+        --extra-index-url ${TORCH_PPC64LE_INDEX_URL} \
+        torch==${TORCH_VERSION} \
         torchvision \
         torchaudio && \
     uv sync --active
@@ -185,10 +187,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Previous uv sync / pip install steps may have pulled CUDA wheels from PyPI;
 # this final reinstall from the CPU index guarantees CPU-only builds.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
-    torch==${TORCH_VERSION}+cpu \
-    torchvision \
-    torchaudio
+    uv pip install --index-strategy unsafe-best-match \
+        --extra-index-url ${TORCH_PPC64LE_INDEX_URL} --reinstall \
+        torch==${TORCH_VERSION} \
+        torchvision \
+        torchaudio
 
 # Cleanup vllm source code
 RUN rm -rf /vllm /tmp/*
