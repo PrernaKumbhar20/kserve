@@ -113,8 +113,33 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Install kserve-storage
 COPY storage storage
 RUN --mount=type=cache,target=/root/.cache/uv \
-    cd storage && uv pip install .
-
+    sed -i \
+        -e '/^    "pyasn1>=[^,]*"$/s/"$/",/' \
+        -e '/^    "pyasn1>=/a\    "google-crc32c==1.8.0",' \
+        -e '/^    "pyasn1>=/a\    "pyyaml==6.0.2",' \
+        storage/pyproject.toml && \
+    printf '%s\n' \
+        '' \
+        '[tool.uv]' \
+        'index-strategy = "unsafe-best-match"' \
+        'package = true' \
+        '' \
+        '[build-system]' \
+        'requires = ["setuptools>=61.0"]' \
+        'build-backend = "setuptools.build_meta"' \
+        '' \
+        '[[tool.uv.index]]' \
+        'name = "ppc64le-wheels"' \
+        'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        'explicit = true' \
+        '' \
+        '[tool.uv.sources]' \
+        'google-crc32c = { index = "ppc64le-wheels" }' \
+        'hf-xet = { index = "ppc64le-wheels" }' \
+        'pyyaml = { index = "ppc64le-wheels" }' \
+        >> storage/pyproject.toml && \
+    cd storage && uv lock && \
+    uv sync --active
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
 RUN --mount=type=cache,target=/root/.cache/uv \
