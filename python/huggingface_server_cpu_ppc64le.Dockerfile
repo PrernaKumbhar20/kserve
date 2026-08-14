@@ -60,17 +60,49 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 
 # Install kserve dependencies (metadata-first for cache)
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
+# Patch kserve/pyproject.toml: add IBM ppc64le index and route packages that
+# have no PyPI ppc64le wheels through it, then regenerate uv.lock.
+RUN sed -i \
+        -e '/^index-strategy\s*=.*/a \\' \
+        -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
+        -e '/^index-strategy\s*=.*/a name = "ppc64le-wheels"' \
+        -e '/^index-strategy\s*=.*/a url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+        -e '/^index-strategy\s*=.*/a explicit = true' \
+        -e '/^\s*"pyasn1>=[^,]*"$/s/"$/",/' \
+        -e '/^\s*"pyasn1>=/a\    "httptools==0.6.4",' \
+        -e '/^\s*"pyasn1>=/a\    "uvloop==0.21.0",' \
+        -e '/^kserve-storage\s*=.*/a grpcio = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a grpcio-tools = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a numpy = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a pandas = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a psutil = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a pyyaml = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a scikit-learn = { index = "ppc64le-wheels" }' \
+        kserve/pyproject.toml && \
+    cd kserve && uv lock && \
+    cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
+    cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml
+
 RUN cd kserve && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
 
 COPY kserve kserve
+
+# Restore the patched pyproject.toml + uv.lock after COPY overwrites them,
+# so the second uv sync also resolves from IBM index (not PyPI).
+RUN rm -f kserve/pyproject.toml kserve/uv.lock && \
+    cp /tmp/kserve_ppc64le_pyproject.toml kserve/pyproject.toml && \
+    cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock && \
+    rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock
+
 RUN cd kserve && \
     uv sync --active --no-cache && \
     uv cache clean && \
     rm -rf ~/.cache/uv
-
 # Install kserve-storage
 COPY storage storage
 RUN cd storage && uv pip install . --no-cache
