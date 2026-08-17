@@ -5,8 +5,7 @@ FROM ${BASE_IMAGE} AS base
 
 ARG PYTHON=python3
 
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update && \
+RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install --no-install-recommends --fix-missing -y \
         g++-12 \
@@ -34,35 +33,43 @@ RUN ln -sf "$(which ${PYTHON})" /usr/bin/python
 FROM base AS builder
 
 # Install uv
-RUN --mount=type=cache,target=/root/.cache/uv \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     ln -s /root/.local/bin/uv /usr/local/bin/uv
 
-# Install build dependencies
+# Install build dependencies.
+# libjpeg-dev, libpng-dev, libtiff-dev, libfreetype6-dev, zlib1g-dev are
+# required to compile pillow from source (no pre-built ppc64le wheel on PyPI).
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update && \
     apt-get install --no-install-recommends --fix-missing -y \
         build-essential \
         git \
+        libfreetype6-dev \
+        libjpeg-dev \
         libnuma-dev \
-        libjpeg-turbo8-dev \
-        zlib1g-dev \
         libpng-dev \
+        libprotobuf-dev \
         libtiff-dev \
-        libfreetype-dev \
-        libwebp-dev \
-        libopenjp2-7-dev && \
+        libyajl-dev \
+        llvm-dev \
+        protobuf-compiler \
+        zlib1g-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal && \
+    /root/.cargo/bin/rustup default stable
+
+ENV PATH="/root/.cargo/bin:$PATH"
 
 # Activate virtual env
 ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
 RUN uv venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PATH="$VIRTUAL_ENV/bin:/root/.cargo/bin:$PATH"
+RUN uv pip install --no-cache-dir "cmake>=3.26" ninja
 
-ARG TORCH_EXTRA_INDEX_URL="https://download.pytorch.org/whl/cpu"
-ARG TORCH_PPC64LE_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux"
+ARG TORCH_EXTRA_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux"
 ARG TORCH_VERSION=2.11.0
 
 # Copy storage metadata for editable dependency resolution
@@ -70,6 +77,7 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 
 # Install kserve dependencies (metadata-first for cache)
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
+
 # Patch kserve/pyproject.toml: add IBM ppc64le index and route packages that
 # have no PyPI ppc64le wheels through it, then regenerate uv.lock.
 RUN sed -i \
@@ -95,9 +103,10 @@ RUN sed -i \
     cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd kserve && \
-    uv sync --active
+RUN cd kserve && \
+    uv sync --active --no-cache && \
+    uv cache clean && \
+    rm -rf ~/.cache/uv
 
 COPY kserve kserve
 
@@ -108,13 +117,15 @@ RUN rm -f kserve/pyproject.toml kserve/uv.lock && \
     cp /tmp/kserve_ppc64le_uv.lock kserve/uv.lock && \
     rm -f /tmp/kserve_ppc64le_pyproject.toml /tmp/kserve_ppc64le_uv.lock
 
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd kserve && \
-    uv sync --active
+RUN cd kserve && \
+    uv sync --active --no-cache && \
+    uv cache clean && \
+    rm -rf ~/.cache/uv
+
 # Install kserve-storage
 COPY storage storage
-RUN --mount=type=cache,target=/root/.cache/uv \
-    sed -i \
+
+RUN sed -i \
         -e '/^    "pyasn1>=[^,]*"$/s/"$/",/' \
         -e '/^    "pyasn1>=/a\    "google-crc32c==1.8.0",' \
         -e '/^    "pyasn1>=/a\    "pyyaml==6.0.2",' \
@@ -140,22 +151,74 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         'pyyaml = { index = "ppc64le-wheels" }' \
         >> storage/pyproject.toml && \
     cd storage && uv lock && \
-    uv sync --active
+    uv sync --active --no-cache && \
+    uv cache clean && \
+    rm -rf ~/.cache/uv
+
 # Install huggingfaceserver dependencies (metadata-first for cache)
 COPY huggingfaceserver/pyproject.toml huggingfaceserver/uv.lock huggingfaceserver/health_check.py huggingfaceserver/
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd huggingfaceserver && \
-    uv pip install --index-strategy unsafe-best-match \
-        --extra-index-url ${TORCH_PPC64LE_INDEX_URL} \
-        torch==${TORCH_VERSION} \
-        torchvision \
-        torchaudio && \
-    uv sync --active
+
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e '/^dependencies = \[$/a\    "torchaudio==2.9.1",' \
+            -e '/^dependencies = \[$/a\    "torchvision==0.27.0",' \
+            -e '/^dependencies = \[$/a\    "torch==2.11.0",' \
+            -e '/^dependencies = \[$/a\    "markupsafe==3.0.3",' \
+            -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+            -e 's|"kserve\[llm\] @ file:///${PROJECT_ROOT}/../kserve"|"kserve @ file:///${PROJECT_ROOT}/../kserve"|' \
+            huggingfaceserver/pyproject.toml && \
+        printf '%s\n' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'torch = { index = "ppc64le-wheels" }' \
+            'torchvision = { index = "ppc64le-wheels" }' \
+            'torchaudio = { index = "ppc64le-wheels" }' \
+            'markupsafe = { index = "ppc64le-wheels" }' \
+            'pillow = { index = "ppc64le-wheels" }' \
+            >> huggingfaceserver/pyproject.toml && \
+        rm -f huggingfaceserver/uv.lock; \
+    fi
+
+RUN cd huggingfaceserver && \
+    uv sync --active --no-cache && \
+    uv cache clean && \
+    rm -rf ~/.cache/uv
 
 COPY huggingfaceserver huggingfaceserver
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN if [ "$(uname -m)" = "ppc64le" ]; then \
+        sed -i \
+            -e '/^dependencies = \[$/a\    "torchaudio==2.9.1",' \
+            -e '/^dependencies = \[$/a\    "torchvision==0.27.0",' \
+            -e '/^dependencies = \[$/a\    "torch==2.11.0",' \
+            -e '/^dependencies = \[$/a\    "markupsafe==3.0.3",' \
+            -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
+            -e 's|"kserve\[llm\] @ file:///${PROJECT_ROOT}/../kserve"|"kserve @ file:///${PROJECT_ROOT}/../kserve"|' \
+            huggingfaceserver/pyproject.toml && \
+        printf '%s\n' \
+            '' \
+            '[[tool.uv.index]]' \
+            'name = "ppc64le-wheels"' \
+            'url = "https://wheels.developerfirst.ibm.com/ppc64le/linux"' \
+            'explicit = true' \
+            '' \
+            '[tool.uv.sources]' \
+            'torch = { index = "ppc64le-wheels" }' \
+            'torchvision = { index = "ppc64le-wheels" }' \
+            'torchaudio = { index = "ppc64le-wheels" }' \
+            'markupsafe = { index = "ppc64le-wheels" }' \
+            'pillow = { index = "ppc64le-wheels" }' \
+            >> huggingfaceserver/pyproject.toml && \
+        rm -f huggingfaceserver/uv.lock; \
+    fi && \
     cd huggingfaceserver && \
-    uv sync --active
+    uv sync --active --no-cache && \
+    uv cache clean && \
+    rm -rf ~/.cache/uv
 
 # install vllm
 ARG VLLM_VERSION=0.24.0
@@ -169,32 +232,30 @@ ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
 RUN git clone --single-branch --branch v${VLLM_VERSION} https://github.com/vllm-project/vllm.git
 
 # Install vLLM build requirements
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd vllm && \
-    uv pip install -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/build/cpu.txt
+RUN cd vllm && \
+    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/build/cpu.txt && \
+    uv cache clean
 
 # Install vLLM cpu requirements
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd vllm && \
-    uv pip install -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/cpu.txt
+RUN cd vllm && \
+    uv pip install --no-cache -v --torch-backend cpu --index-strategy unsafe-best-match -r requirements/cpu.txt && \
+    uv cache clean
 
 # Build and install vLLM
-RUN --mount=type=cache,target=/root/.cache/uv \
-    cd vllm && \
-    VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} uv pip install --no-build-isolation --index-strategy unsafe-best-match .
+RUN cd vllm && \
+    VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE} uv pip install --no-cache --no-build-isolation --index-strategy unsafe-best-match . && \
+    uv cache clean
 
 # Ensure CPU-only torch, torchvision, and torchaudio are installed.
 # Previous uv sync / pip install steps may have pulled CUDA wheels from PyPI;
 # this final reinstall from the CPU index guarantees CPU-only builds.
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --index-strategy unsafe-best-match \
-        --extra-index-url ${TORCH_PPC64LE_INDEX_URL} --reinstall \
-        torch==${TORCH_VERSION} \
-        torchvision \
-        torchaudio
+RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match --extra-index-url ${TORCH_EXTRA_INDEX_URL} --reinstall \
+    torch==${TORCH_VERSION}+cpu \
+    torchvision \
+    torchaudio
 
-# Cleanup vllm source code
-RUN rm -rf /vllm /tmp/*
+# Cleanup vllm source code and caches
+RUN rm -rf /vllm /root/.cache/uv /root/.cache/pip /tmp/*
 
 RUN df -hT
 
@@ -202,8 +263,7 @@ RUN df -hT
 COPY pyproject.toml pyproject.toml
 COPY third_party/pip-licenses.py pip-licenses.py
 # TODO: Remove this when upgrading to python 3.11+
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install tomli
+RUN pip install --no-cache-dir tomli
 RUN mkdir -p third_party/library && python3 pip-licenses.py
 
 # Build the final image
