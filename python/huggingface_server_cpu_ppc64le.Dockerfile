@@ -70,7 +70,6 @@ ENV PATH="$VIRTUAL_ENV/bin:/root/.cargo/bin:$PATH"
 RUN uv pip install --no-cache-dir "cmake>=3.26" ninja
 
 ARG TORCH_EXTRA_INDEX_URL="https://wheels.developerfirst.ibm.com/ppc64le/linux"
-ARG LOCAL_INDEX_URL="http://10.20.186.132:8000/"
 ARG TORCH_VERSION=2.11.0
 
 # Copy storage metadata for editable dependency resolution
@@ -229,10 +228,18 @@ ARG VLLM_CPU_AVX512BF16=1
 ENV VLLM_CPU_AVX512BF16=${VLLM_CPU_AVX512BF16}
 ARG VLLM_TARGET_DEVICE=cpu
 ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
-# Preinstall vLLM dependencies from IBM ppc64le devpi and local index.
-# sentencepiece, tiktoken, msgspec are fetched from the local index (locally built ppc64le wheels).
-# --allow-insecure-host is required because the local index serves over plain HTTP.
-# Remaining packages are fetched from the IBM devpi index.
+# Preinstall sentencepiece from IBM ppc64le index so vLLM can reuse it.
+RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
+    --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
+    sentencepiece==0.2.1 \
+    tiktoken==0.12.0 \
+    msgspec==0.19.0 \
+    ijson==3.5.0 \
+    llguidance==1.7.5 \
+    xgrammar==0.2.1 \
+    opencv-python-headless==4.13.0.92 && \
+    uv cache clean
+
 # Install prebuilt vLLM wheel from IBM ppc64le index to avoid long source builds.
 RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
     --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
