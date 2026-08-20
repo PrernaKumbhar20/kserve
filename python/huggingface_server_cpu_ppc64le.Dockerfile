@@ -233,22 +233,6 @@ ENV VLLM_TARGET_DEVICE=${VLLM_TARGET_DEVICE}
 # sentencepiece, tiktoken, msgspec are fetched from the local index (locally built ppc64le wheels).
 # --allow-insecure-host is required because the local index serves over plain HTTP.
 # Remaining packages are fetched from the IBM devpi index.
-RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
-    --allow-insecure-host 10.20.186.132 \
-    --extra-index-url ${LOCAL_INDEX_URL} \
-    sentencepiece==0.2.2 \
-    tiktoken==0.13.0 \
-    msgspec==0.21.1 && \
-    uv cache clean
-
-RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
-    --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
-    ijson==3.5.0 \
-    llguidance==1.7.5 \
-    xgrammar==0.2.1 \
-    opencv-python-headless==4.13.0.92 && \
-    uv cache clean
-
 # Install prebuilt vLLM wheel from IBM ppc64le index to avoid long source builds.
 RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
     --extra-index-url ${TORCH_EXTRA_INDEX_URL} \
