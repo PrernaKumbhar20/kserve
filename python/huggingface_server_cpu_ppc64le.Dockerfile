@@ -184,7 +184,9 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             'pillow = { index = "ppc64le-wheels" }' \
             >> huggingfaceserver/pyproject.toml && \
         rm -f huggingfaceserver/uv.lock; \
-    fi
+    fi && \
+    echo '===== huggingfaceserver/pyproject.toml (metadata copy) =====' && \
+    cat huggingfaceserver/pyproject.toml
 
 RUN cd huggingfaceserver && \
     uv sync --active --no-cache && \
