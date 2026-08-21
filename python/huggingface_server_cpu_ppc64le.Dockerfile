@@ -98,6 +98,7 @@ RUN sed -i \
         -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
         -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
         -e '/^kserve-storage\s*=.*/a scikit-learn = { index = "ppc64le-wheels" }' \
+        -e '/^kserve-storage\s*=.*/a pillow = { index = "ppc64le-wheels" }' \
         kserve/pyproject.toml && \
     cd kserve && uv lock && \
     cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
@@ -164,6 +165,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             -e '/^dependencies = \[$/a\    "torchvision==0.27.0",' \
             -e '/^dependencies = \[$/a\    "torch==2.11.0",' \
             -e '/^dependencies = \[$/a\    "markupsafe==3.0.3",' \
+            -e '/^dependencies = \[$/a\    "pillow==12.3.0",' \
             -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
             -e 's|"kserve\[llm\] @ file:///${PROJECT_ROOT}/../kserve"|"kserve @ file:///${PROJECT_ROOT}/../kserve"|' \
             huggingfaceserver/pyproject.toml && \
@@ -196,6 +198,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             -e '/^dependencies = \[$/a\    "torchvision==0.27.0",' \
             -e '/^dependencies = \[$/a\    "torch==2.11.0",' \
             -e '/^dependencies = \[$/a\    "markupsafe==3.0.3",' \
+            -e '/^dependencies = \[$/a\    "pillow==12.3.0",' \
             -e 's|"bitsandbytes>=0.45.3"|"bitsandbytes>=0.45.3; platform_machine == '\''x86_64'\''"|' \
             -e 's|"kserve\[llm\] @ file:///${PROJECT_ROOT}/../kserve"|"kserve @ file:///${PROJECT_ROOT}/../kserve"|' \
             huggingfaceserver/pyproject.toml && \
@@ -236,8 +239,8 @@ RUN uv pip install --no-cache-dir --index-strategy unsafe-best-match \
     msgspec==0.19.0 \
     ijson==3.5.0 \
     llguidance==1.7.5 \
-    xgrammar==0.2.1 \
-    opencv-python-headless==4.13.0.92 && \
+    xgrammar \
+    opencv-python-headless && \
     uv cache clean
 
 # Install prebuilt vLLM wheel from IBM ppc64le index to avoid long source builds.
