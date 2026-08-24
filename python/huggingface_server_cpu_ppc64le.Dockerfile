@@ -100,7 +100,7 @@ RUN sed -i \
         -e '/^kserve-storage\s*=.*/a scikit-learn = { index = "ppc64le-wheels" }' \
         -e '/^kserve-storage\s*=.*/a pillow = { index = "ppc64le-wheels" }' \
         kserve/pyproject.toml && \
-    cd kserve && uv lock && \
+    cd kserve && uv lock --python 3.10 && \
     cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
     cp pyproject.toml /tmp/kserve_ppc64le_pyproject.toml
 
