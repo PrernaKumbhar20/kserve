@@ -79,8 +79,11 @@ COPY storage/pyproject.toml storage/uv.lock storage/
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 
 # Patch kserve/pyproject.toml: add IBM ppc64le index and route packages that
-# have no PyPI ppc64le wheels through it, then regenerate uv.lock.
+# have no PyPI ppc64le wheels through it, pin grpcio/grpcio-tools for ppc64le,
+# then regenerate uv.lock.
 RUN sed -i \
+        -e 's/"grpcio<2.0.0,>=1.73.0"/"grpcio==1.76.0"/' \
+        -e 's/"grpcio-tools<2.0.0,>=1.73.0"/"grpcio-tools==1.76.0"/' \
         -e '/^index-strategy\s*=.*/a \\' \
         -e '/^index-strategy\s*=.*/a [[tool.uv.index]]' \
         -e '/^index-strategy\s*=.*/a name = "ppc64le-wheels"' \
