@@ -128,6 +128,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             '[tool.uv.sources]' \
             'scipy = { index = "ppc64le-wheels" }' \
             'pillow = { index = "ppc64le-wheels" }' \
+            'xgboost = { index = "ppc64le-wheels" }' \
             >> xgbserver/pyproject.toml && \
         cd xgbserver && uv lock && \
         cp uv.lock /tmp/xgbserver_ppc64le_uv.lock && \
