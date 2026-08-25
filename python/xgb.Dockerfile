@@ -46,6 +46,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             -e '/^kserve-storage\s*=.*/a pyyaml = { index = "ppc64le-wheels" }' \
             -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
             -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pillow = { index = "ppc64le-wheels" }' \
             kserve/pyproject.toml && \
         cd kserve && uv lock && \
         cp uv.lock /tmp/kserve_ppc64le_uv.lock && \
@@ -126,6 +127,7 @@ RUN if [ "$(uname -m)" = "ppc64le" ]; then \
             '' \
             '[tool.uv.sources]' \
             'scipy = { index = "ppc64le-wheels" }' \
+            'pillow = { index = "ppc64le-wheels" }' \
             >> xgbserver/pyproject.toml && \
         cd xgbserver && uv lock && \
         cp uv.lock /tmp/xgbserver_ppc64le_uv.lock && \
