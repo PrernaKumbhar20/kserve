@@ -109,8 +109,9 @@ COPY xgbserver/pyproject.toml xgbserver/uv.lock xgbserver/
 
 RUN if [ "$(uname -m)" = "ppc64le" ]; then \
         sed -i \
-            -e '/^    "xgboost~=2.1.1",$/s/"$/",/' \
-            -e '/^    "xgboost~=2.1.1",$/a\    "scipy==1.15.2",' \
+            -e 's/"xgboost~=2.1.1"/"xgboost-cpu~=2.1.1"/' \
+            -e '/^    "xgboost-cpu~=2.1.1",$/s/"$/",/' \
+            -e '/^    "xgboost-cpu~=2.1.1",$/a\    "scipy==1.15.2",' \
             xgbserver/pyproject.toml && \
         printf '%s\n' \
             '' \
