@@ -51,6 +51,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
             -e '/^kserve-storage\s*=.*/a pyyaml = { index = "ppc64le-wheels" }' \
             -e '/^kserve-storage\s*=.*/a httptools = { index = "ppc64le-wheels" }' \
             -e '/^kserve-storage\s*=.*/a uvloop = { index = "ppc64le-wheels" }' \
+            -e '/^kserve-storage\s*=.*/a pillow = { index = "ppc64le-wheels" }' \
             kserve/pyproject.toml && \
         echo "=== kserve/pyproject.toml (patched) ===" && cat kserve/pyproject.toml && \
         cd kserve && uv lock && \
@@ -132,6 +133,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
             '' \
             '[tool.uv.sources]' \
             'paddlepaddle = { index = "ppc64le-wheels" }' \
+            'pillow = { index = "ppc64le-wheels" }' \
             >> paddleserver/pyproject.toml && \
         echo "=== paddleserver/pyproject.toml (patched) ===" && cat paddleserver/pyproject.toml && \
         cd paddleserver && uv lock && \
