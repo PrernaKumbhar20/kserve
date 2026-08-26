@@ -4,7 +4,7 @@ on:
   push:
     # Publish `master` as Docker `latest` image.
     branches:
-      - hugging-face-cpu-13
+      - hugging-face-cpu-final-26
 
     # Publish `v1.2.3` tags as releases.
     tags:
